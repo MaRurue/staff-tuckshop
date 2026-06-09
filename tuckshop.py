@@ -327,7 +327,7 @@ if PRODUCTS_URL:
 elif os.path.exists(excel_path):
     data, load_error = load_data_from_excel(excel_path)
 else:
-    uploaded_file = st.file_uploader("Upload the tuckshop products Excel workbook:", type=["xlsx"])
+    uploaded_file = st.file_uploader("📂 Upload the tuckshop products Excel workbook:", type=["xlsx"])
     if uploaded_file is not None:
         import io
         data, load_error = load_data_from_excel(io.BytesIO(uploaded_file.read()))
@@ -462,7 +462,7 @@ if app_mode == "🛒 Staff Storefront":
             </div>""", unsafe_allow_html=True)
             st.button("🧹 Clear Cart", on_click=clear_cart, use_container_width=True)
             st.markdown("<div style='margin-top:30px;'></div>", unsafe_allow_html=True)
-            st.markdown("<div class='cart-header'>Checkout Details</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'>📋 Checkout Details</div>", unsafe_allow_html=True)
             staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
             staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
@@ -489,7 +489,7 @@ if app_mode == "🛒 Staff Storefront":
                     st.success("Order processed successfully!")
                     st.rerun()
  
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>🎒 Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
  
     if st.session_state.order_placed and st.session_state.latest_order:
