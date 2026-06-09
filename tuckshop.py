@@ -135,18 +135,75 @@ def load_data_from_excel(source):
         data = {}
         for sheet in xl.sheet_names:
             df = xl.parse(sheet)
-            # Clean dataframe
+
+            # Strip whitespace from all column names
+            df.columns = [str(c).strip() for c in df.columns]
+
+            # Build case-insensitive column lookup
+            lower_cols = {c.lower(): c for c in df.columns}
+
+            # Find 'Product' column (try variants)
+            product_col = (lower_cols.get('product') or
+                           lower_cols.get('product name') or
+                           lower_cols.get('item') or
+                           lower_cols.get('name'))
+
+            # Find 'Cost price' column (try variants)
+            cost_col = (lower_cols.get('cost price') or
+                        lower_cols.get('cost_price') or
+                        lower_cols.get('costprice') or
+                        lower_cols.get('price') or
+                        lower_cols.get('cost') or
+                        lower_cols.get('unit price') or
+                        lower_cols.get('selling price'))
+
+            # Find 'UOM' column (try variants)
+            uom_col = (lower_cols.get('uom') or
+                       lower_cols.get('unit') or
+                       lower_cols.get('unit of measure') or
+                       lower_cols.get('units'))
+
+            if not product_col or not cost_col:
+                # Skip sheets that don't have recognizable product/price columns
+                continue
+
+            # Standardize column names to what the rest of the app expects
+            rename = {product_col: 'Product', cost_col: 'Cost price'}
+            if uom_col:
+                rename[uom_col] = 'UOM'
+            df.rename(columns=rename, inplace=True)
+
+            if 'UOM' not in df.columns:
+                df['UOM'] = ''
+
+            # Clean values
             df = df.dropna(subset=['Product', 'Cost price'])
             df['Product'] = df['Product'].astype(str).str.strip()
             df['UOM'] = df['UOM'].astype(str).str.strip().fillna('')
             df['Cost price'] = pd.to_numeric(df['Cost price'], errors='coerce')
             df = df.dropna(subset=['Cost price'])
-            # Sort products alphabetically
+            df = df[df['Product'].str.len() > 0]
             df = df.sort_values(by='Product')
-            data[sheet] = df
+
+            if not df.empty:
+                data[sheet] = df
+
+        if not data:
+            # Show helpful diagnostic: list all sheets and their columns
+            debug_info = []
+            for sheet in xl.sheet_names:
+                df_raw = xl.parse(sheet)
+                cols = list(df_raw.columns[:10])  # show first 10 cols
+                debug_info.append(f"Sheet '{sheet}': {cols}")
+            hint = " | ".join(debug_info)
+            return None, (
+                f"No valid product sheets found. Your spreadsheet needs columns called "
+                f"'Product' and 'Cost price'. Found: {hint}"
+            )
         return data, None
     except Exception as e:
         return None, str(e)
+
 
 # ---- Determine data source (Cloud URL > Local path > Upload) ----
 PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
