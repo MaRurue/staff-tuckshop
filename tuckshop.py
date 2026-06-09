@@ -588,7 +588,7 @@ elif app_mode == "🔑 Seller Portal":
         orders, db_source = load_orders()
  
         with st.sidebar:
-            st.markdown("<div class='cart-header'>🔑 Admin Session</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> Admin Session</div>", unsafe_allow_html=True)
             if db_source == "gspread":
                 st.markdown("<div style='color:#10b981;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
             else:
