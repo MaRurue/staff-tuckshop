@@ -489,7 +489,7 @@ if app_mode == "🛒 Staff Storefront":
                     st.success("Order processed successfully!")
                     st.rerun()
  
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'> Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>🎒 Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
  
     if st.session_state.order_placed and st.session_state.latest_order:
