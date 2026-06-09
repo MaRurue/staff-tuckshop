@@ -514,7 +514,7 @@ if app_mode == "🛒 Staff Storefront":
             staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
             
             # Place Order button
-            if st.button("🚀 Place Order & Get Receipt", type="primary", use_container_width=True):
+            if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
                 elif not staff_id.strip():
@@ -553,7 +553,7 @@ if app_mode == "🛒 Staff Storefront":
                     st.rerun()
 
     # ----------------- STOREFRONT MAIN PANEL -----------------
-    st.markdown("<h1 style='text-align: center; color: #1e3a8a; font-family: \"Outfit\", sans-serif;'>🎒 Tuckshop Staff Ordering Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1e3a8a; font-family: \"Outfit\", sans-serif;'> Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b; font-size: 1.1rem; margin-bottom: 30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
 
     if st.session_state.order_placed and st.session_state.latest_order:
@@ -562,7 +562,7 @@ if app_mode == "🛒 Staff Storefront":
         
         st.markdown("<div style='text-align: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
         st.balloons()
-        st.markdown("<h3>🎉 Order Successfully Placed!</h3>", unsafe_allow_html=True)
+        st.markdown("<h3> Order Successfully Placed!</h3>", unsafe_allow_html=True)
         st.markdown("Please print the receipt below and present it to the tuckshop to collect your order.", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
@@ -579,7 +579,7 @@ if app_mode == "🛒 Staff Storefront":
         receipt_html = generate_receipt_html_helper(order, items_rows)
         components.html(receipt_html, height=550, scrolling=True)
         
-        st.button("🔄 Back to Tuckshop / Order More", on_click=clear_cart)
+        st.button("Back to Tuckshop / Order More", on_click=clear_cart)
 
     else:
         # ---------------- Search and Filtering ----------------
@@ -695,8 +695,8 @@ elif app_mode == "🔑 Seller Portal":
                 st.markdown("<div style='color: #10b981; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
             else:
                 st.markdown("<div style='color: #f59e0b; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px;'>🟡 Local Fallback Mode</div>", unsafe_allow_html=True)
-            st.button("🔄 Refresh Orders", use_container_width=True)
-            st.button("🔒 Lock Portal / Log Out", on_click=logout_seller, use_container_width=True)
+            st.button("Refresh Orders", use_container_width=True)
+            st.button("Lock Portal / Log Out", on_click=logout_seller, use_container_width=True)
 
         # 2. Analytics metrics
         total_orders = len(orders)
