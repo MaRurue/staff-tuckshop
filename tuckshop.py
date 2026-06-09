@@ -489,7 +489,7 @@ if app_mode == "🛒 Staff Storefront":
                     st.success("Order processed successfully!")
                     st.rerun()
  
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'> Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
  
     if st.session_state.order_placed and st.session_state.latest_order:
@@ -504,7 +504,7 @@ if app_mode == "🛒 Staff Storefront":
             for i in order["items"]
         )
         components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
-        st.button("Back to Tuckshop / Order More", on_click=clear_cart)
+        st.button("🔄 Back to Tuckshop / Order More", on_click=clear_cart)
  
     else:
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
@@ -567,8 +567,8 @@ if app_mode == "🛒 Staff Storefront":
 # ══════════════════════════════════════════════════════════════════════════════
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
-elif app_mode == "Seller Portal":
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>Tuckshop Sales Administration Portal</h1>", unsafe_allow_html=True)
+elif app_mode == "🔑 Seller Portal":
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>🔑 Tuckshop Seller Administration Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Log in to review receipts, track daily stats, and mark orders as completed.</p>", unsafe_allow_html=True)
  
     if not st.session_state.seller_authenticated:
@@ -588,7 +588,7 @@ elif app_mode == "Seller Portal":
         orders, db_source = load_orders()
  
         with st.sidebar:
-            st.markdown("<div class='cart-header'>Admin Session</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'>🔑 Admin Session</div>", unsafe_allow_html=True)
             if db_source == "gspread":
                 st.markdown("<div style='color:#10b981;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
             else:
