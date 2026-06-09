@@ -428,7 +428,7 @@ for key, qty in list(st.session_state.quantities.items()):
  
 # ── Navigation ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("<div class='cart-header'>🧭 Navigation</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cart-header'> Navigation</div>", unsafe_allow_html=True)
     app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
