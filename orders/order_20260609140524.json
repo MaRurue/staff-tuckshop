@@ -1,0 +1,98 @@
+{
+    "order_id": "20260609140524",
+    "date": "2026-06-09 14:05:24",
+    "staff_name": "Tanaka Sv",
+    "staff_id": "IT test",
+    "status": "Pending",
+    "items": [
+        {
+            "category": "Cordials",
+            "name": "COFFEE JACOBS",
+            "uom": "200G",
+            "price": 13.41,
+            "qty": 1,
+            "subtotal": 13.41
+        },
+        {
+            "category": "Cordials",
+            "name": "HOT CHOCOLATE",
+            "uom": "500G",
+            "price": 4.26,
+            "qty": 1,
+            "subtotal": 4.26
+        },
+        {
+            "category": "Cordials",
+            "name": "CHOCOLATE MILO",
+            "uom": "500G",
+            "price": 4.41,
+            "qty": 1,
+            "subtotal": 4.41
+        },
+        {
+            "category": "Cordials",
+            "name": "TEA ROOIBOS {80S}",
+            "uom": "250G",
+            "price": 3.92,
+            "qty": 1,
+            "subtotal": 3.92
+        },
+        {
+            "category": "Dairy",
+            "name": "AMASI",
+            "uom": "LTRS",
+            "price": 3.0,
+            "qty": 1,
+            "subtotal": 3.0
+        },
+        {
+            "category": "Dairy",
+            "name": "CANTERS LACTO",
+            "uom": "LTRS",
+            "price": 1.2,
+            "qty": 1,
+            "subtotal": 1.2
+        },
+        {
+            "category": "Dairy",
+            "name": "CHEESE CHEDDAR",
+            "uom": "KG",
+            "price": 12.13,
+            "qty": 1,
+            "subtotal": 12.13
+        },
+        {
+            "category": "Dairy",
+            "name": "CHEESE MOZARELLA",
+            "uom": "KG",
+            "price": 9.53,
+            "qty": 1,
+            "subtotal": 9.53
+        },
+        {
+            "category": "Dairy",
+            "name": "YELLOW MARGARINE",
+            "uom": "KG",
+            "price": 2.29,
+            "qty": 1,
+            "subtotal": 2.29
+        },
+        {
+            "category": "Meats",
+            "name": "BEEF BOEREWORS HUNTERSI",
+            "uom": "KG",
+            "price": 7.99,
+            "qty": 1,
+            "subtotal": 7.99
+        },
+        {
+            "category": "Meats",
+            "name": "BEEF CHIPOLATA SAUSAGES",
+            "uom": "KG",
+            "price": 7.68,
+            "qty": 1,
+            "subtotal": 7.68
+        }
+    ],
+    "total": 69.82
+}

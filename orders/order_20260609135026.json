@@ -1,0 +1,66 @@
+{
+    "order_id": "20260609135026",
+    "date": "2026-06-09 13:50:26",
+    "staff_name": "Chara Mabeza",
+    "staff_id": "IT",
+    "items": [
+        {
+            "category": "Dry Tinned",
+            "name": "BAKING POWDER  KG",
+            "uom": "KG",
+            "price": 3.12,
+            "qty": 2,
+            "subtotal": 6.24
+        },
+        {
+            "category": "Dry Tinned",
+            "name": "BAKED BEANS CASHEL VALLEY",
+            "uom": "410G",
+            "price": 0.87,
+            "qty": 1,
+            "subtotal": 0.87
+        },
+        {
+            "category": "Cordials",
+            "name": "COFFEE RICOFFY",
+            "uom": "250G",
+            "price": 4.37,
+            "qty": 2,
+            "subtotal": 8.74
+        },
+        {
+            "category": "Cordials",
+            "name": "SQUISH SQUASH CREAM SODA",
+            "uom": "2LTRS",
+            "price": 2.08,
+            "qty": 1,
+            "subtotal": 2.08
+        },
+        {
+            "category": "Dairy",
+            "name": "AMASI",
+            "uom": "LTRS",
+            "price": 3.0,
+            "qty": 1,
+            "subtotal": 3.0
+        },
+        {
+            "category": "Dairy",
+            "name": "CANTERS FETA CHEESE",
+            "uom": "200G",
+            "price": 4.0,
+            "qty": 1,
+            "subtotal": 4.0
+        },
+        {
+            "category": "Dairy",
+            "name": "CANTERS FRESH MILK",
+            "uom": "LTRS",
+            "price": 1.0,
+            "qty": 1,
+            "subtotal": 1.0
+        }
+    ],
+    "total": 25.93,
+    "status": "Completed"
+}

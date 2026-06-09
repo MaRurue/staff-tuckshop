@@ -1,0 +1,26 @@
+{
+    "order_id": "20260609135030",
+    "date": "2026-06-09 13:50:30",
+    "staff_name": "Jane Doe",
+    "staff_id": "Tuckshop-Test",
+    "items": [
+        {
+            "category": "Cordials",
+            "name": "CHOCOLATE MILO",
+            "uom": "500G",
+            "price": 4.41,
+            "qty": 1,
+            "subtotal": 4.41
+        },
+        {
+            "category": "Cordials",
+            "name": "HOT CHOCOLATE",
+            "uom": "500G",
+            "price": 4.26,
+            "qty": 1,
+            "subtotal": 4.26
+        }
+    ],
+    "total": 8.67,
+    "status": "Completed"
+}
