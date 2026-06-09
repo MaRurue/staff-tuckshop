@@ -127,11 +127,11 @@ def update_order_status(order_id, status):
         
     return success
 
-# Caching the data loading function
+# Caching the data loading function - from a file path or BytesIO buffer
 @st.cache_data
-def load_data_from_excel(path_to_file):
+def load_data_from_excel(source):
     try:
-        xl = pd.ExcelFile(path_to_file)
+        xl = pd.ExcelFile(source)
         data = {}
         for sheet in xl.sheet_names:
             df = xl.parse(sheet)
@@ -148,30 +148,40 @@ def load_data_from_excel(path_to_file):
     except Exception as e:
         return None, str(e)
 
-# Determine data source
+# ---- Determine data source (Cloud URL > Local path > Upload) ----
+PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
 excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
 data = None
 load_error = None
 
-if os.path.exists(excel_path):
+if PRODUCTS_URL:
+    # Download the Excel from Google Sheets (published as xlsx export)
+    try:
+        import io
+        resp = requests.get(PRODUCTS_URL, timeout=15)
+        resp.raise_for_status()
+        data, load_error = load_data_from_excel(io.BytesIO(resp.content))
+    except Exception as e:
+        load_error = str(e)
+elif os.path.exists(excel_path):
     data, load_error = load_data_from_excel(excel_path)
 else:
-    st.warning(f"Could not automatically find the Excel file at `{excel_path}`.")
-    uploaded_file = st.file_uploader("Please upload the tuckshop products Excel workbook:", type=["xlsx"])
+    uploaded_file = st.file_uploader("📂 Upload the tuckshop products Excel workbook:", type=["xlsx"])
     if uploaded_file is not None:
-        # Save temporary file to read
-        temp_path = "temp_products.xlsx"
-        with open(temp_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        data, load_error = load_data_from_excel(temp_path)
+        import io
+        data, load_error = load_data_from_excel(io.BytesIO(uploaded_file.read()))
+    else:
+        st.info("⏳ Waiting for Excel workbook input — or set PRODUCTS_GOOGLE_SHEET_URL in Streamlit Secrets.")
+        st.stop()
 
 if load_error:
     st.error(f"Error loading Excel workbook: {load_error}")
     st.stop()
 
 if data is None:
-    st.info("Waiting for Excel workbook input...")
+    st.info("Waiting for product data...")
     st.stop()
+
 
 # Initialize session state for quantities, checkout state, admin auth
 if "quantities" not in st.session_state:
