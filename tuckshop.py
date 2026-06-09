@@ -673,7 +673,7 @@ elif app_mode == "🔑 Seller Portal":
         # ── Danger Zone: Clear All Orders ─────────────────────────────────────
         st.markdown("""
         <div class='danger-zone'>
-            <div class='danger-zone-title'>⚠️ Danger Zone</div>
+            <div class='danger-zone-title'>⚠️ Danger!</div>
             <div class='danger-zone-desc'>
                 Permanently deletes <strong>all orders</strong> from Google Sheets and local storage.
                 Use this to wipe test data before going live. This cannot be undone.
