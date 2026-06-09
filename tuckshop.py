@@ -428,8 +428,8 @@ for key, qty in list(st.session_state.quantities.items()):
  
 # ── Navigation ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("<div class='cart-header'>Navigation</div>", unsafe_allow_html=True)
-    app_mode = st.selectbox("Select View Mode", ["Staff Storefront", "Seller Portal"], label_visibility="collapsed")
+    st.markdown("<div class='cart-header'>🧭 Navigation</div>", unsafe_allow_html=True)
+    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
         st.markdown("<div style='text-align:center;color:#10b981;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟢 Cloud Connected</div>", unsafe_allow_html=True)
@@ -489,7 +489,7 @@ if app_mode == "🛒 Staff Storefront":
                     st.success("Order processed successfully!")
                     st.rerun()
  
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>🎒 Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
  
     if st.session_state.order_placed and st.session_state.latest_order:
