@@ -39,11 +39,26 @@ def load_orders():
             response = requests.get(GSHEETS_WEBAPP_URL, timeout=10)
             if response.status_code == 200:
                 orders = response.json()
+                # Google Sheets stores items as a JSON string — parse it back into a list
+                for order in orders:
+                    items = order.get("items", [])
+                    if isinstance(items, str):
+                        try:
+                            order["items"] = json.loads(items)
+                        except Exception:
+                            order["items"] = []
+                    # Ensure required fields exist
+                    if "status" not in order:
+                        order["status"] = "Pending"
+                    try:
+                        order["total"] = float(order.get("total", 0))
+                    except (ValueError, TypeError):
+                        order["total"] = 0.0
                 orders.sort(key=lambda x: x.get("order_id", ""), reverse=True)
                 return orders, "gspread"
         except Exception as e:
             pass  # Fail silently and fall back to local files
-            
+
     # Fallback to local files
     orders = []
     if os.path.exists(ORDERS_DIR):
