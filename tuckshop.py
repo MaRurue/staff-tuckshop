@@ -568,7 +568,7 @@ if app_mode == "🛒 Staff Storefront":
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 elif app_mode == "🔑 Seller Portal":
-    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'>🔑 Tuckshop Seller Administration Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;color:#1e3a8a;'> Tuckshop Sales Administration Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Log in to review receipts, track daily stats, and mark orders as completed.</p>", unsafe_allow_html=True)
  
     if not st.session_state.seller_authenticated:
