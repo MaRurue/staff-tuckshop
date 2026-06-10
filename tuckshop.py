@@ -454,26 +454,13 @@ def update_quantity(pk, new_qty, active_key=None):
         st.session_state.quantities[pk] = new_qty
     elif pk in st.session_state.quantities:
         del st.session_state.quantities[pk]
-    for k in list(st.session_state.keys()):
-        if k.startswith("ni_") and pk in k:
-            if active_key is not None and k == active_key:
-                continue
-            try:
-                del st.session_state[k]
-            except KeyError:
-                pass
+    # 🌟 Removed the "del st.session_state[k]" loop completely!
 
 def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
-    for k in list(st.session_state.keys()):
-        if k.startswith("ni_"):
-            try:
-                del st.session_state[k]
-            except KeyError:
-                pass
-
+    # 🌟 Removed the "del st.session_state[k]" loop completely!
 
 def logout_seller():
     st.session_state.seller_authenticated = False
