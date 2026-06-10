@@ -536,7 +536,7 @@ def show_logo(width=80):
             )
     else:
         st.markdown(
-            "<h2 style='color:#1e3a8a;margin:0;'>🦅 FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
+            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
             unsafe_allow_html=True
         )
 
@@ -545,7 +545,7 @@ def show_logo(width=80):
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
-    st.markdown("<div class='cart-header'>🦅 Falcon College Tuckshop</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cart-header'> Falcon College Tuckshop</div>", unsafe_allow_html=True)
     app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
@@ -581,7 +581,7 @@ if app_mode == "🛒 Staff Storefront":
 
             col_remove, col_clear = st.columns(2)
             with col_remove:
-                if st.button("🗑️ Clear Selected", use_container_width=True):
+                if st.button(" Clear Selected", use_container_width=True):
                     for item in cart_items:
                         if remove_flags.get(item["key"], False):
                             if item["key"] in st.session_state.quantities:
@@ -592,10 +592,10 @@ if app_mode == "🛒 Staff Storefront":
                         st.session_state.latest_order = None
                     st.rerun()
             with col_clear:
-                st.button("🧹 Clear All", on_click=clear_cart, use_container_width=True)
+                st.button(" Clear All", on_click=clear_cart, use_container_width=True)
 
             st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-            st.markdown("<div class='cart-header'>📋 Checkout Details</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
             staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
             staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
@@ -639,7 +639,7 @@ if app_mode == "🛒 Staff Storefront":
             for i in order["items"]
         )
         components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
-        st.button("🔄 Back to Tuckshop / Order More", on_click=clear_cart)
+        st.button(" Back to Tuckshop / Order More", on_click=clear_cart)
 
     else:
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
@@ -741,7 +741,7 @@ elif app_mode == "🔑 Seller Portal":
         st.markdown("<div style='margin-top:30px;'></div>", unsafe_allow_html=True)
 
         # ── Portal Tabs ────────────────────────────────────────────────────────
-        portal_tab_orders, portal_tab_products = st.tabs(["📋 Orders", "🗂️ Manage Products"])
+        portal_tab_orders, portal_tab_products = st.tabs([" Orders", " Manage Products"])
 
         # ══════════════════════════════════════════════════════════════════════
         # TAB 1 — ORDERS
@@ -840,7 +840,7 @@ elif app_mode == "🔑 Seller Portal":
             # ── Danger Zone: Clear All Orders ─────────────────────────────────
             st.markdown("""
             <div class='danger-zone'>
-                <div class='danger-zone-title'>⚠️ Danger Zone</div>
+                <div class='danger-zone-title'>⚠️ Warning</div>
                 <div class='danger-zone-desc'>
                     Permanently deletes <strong>all orders</strong> from Google Sheets and local storage.
                     Use this to wipe test data before going live. This cannot be undone.
@@ -873,7 +873,7 @@ elif app_mode == "🔑 Seller Portal":
         # TAB 2 — MANAGE PRODUCTS
         # ══════════════════════════════════════════════════════════════════════
         with portal_tab_products:
-            st.markdown("### 🗂️ Product Catalogue Management")
+            st.markdown("### Product Catalogue Management")
             st.markdown(
                 "Add new items or update prices here. Changes are saved to a local override file "
                 "and applied immediately on all sessions after the next page refresh. "
@@ -922,7 +922,7 @@ elif app_mode == "🔑 Seller Portal":
                                 st.error("Failed to save product. Check file write permissions.")
 
             # ── Edit Existing Prices ───────────────────────────────────────────
-            st.markdown("#### ✏️ Edit Product Prices")
+            st.markdown("#### Edit Product Prices")
             st.markdown("Select a category to see all products and update their prices.")
             selected_edit_cat = st.selectbox("Category to Edit", list(data.keys()), key="edit_cat_select")
 
