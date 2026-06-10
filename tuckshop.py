@@ -642,7 +642,7 @@ if app_mode == "🛒 Staff Storefront":
 
         def render_product_card(category, row, idx, key_prefix=""):
             """Render a single product card with ➖ / number_input / ➕ controls."""
-            """ pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+            pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
             cq = st.session_state.quantities.get(pk, 0)
             with st.container(border=True):
                 st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
@@ -669,7 +669,7 @@ if app_mode == "🛒 Staff Storefront":
                 with c3:
                     if st.button("➕", key=f"i_{key_prefix}{pk}_{idx}"):
                         st.session_state.quantities[pk] = cq + 1
-                        st.rerun()"""
+                        st.rerun()
 
         if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
