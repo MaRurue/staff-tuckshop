@@ -1042,7 +1042,7 @@ st.markdown("""
     padding: 7px 0 6px;
     font-size: 0.8rem;
     font-family: 'Outfit', sans-serif;
-    color: #94a3b8;
+    color: #1e293b;
     letter-spacing: 0.02em;
 }
 .fixed-footer strong { color: #1e293b; }
