@@ -152,7 +152,7 @@ os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
-DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzo9J3saZPClaUOgS8v-9BVPl3kTmvSRD23-Oxjz4zPdgA67Ec94pMWJ21l8ve2f4yH/exec"
+DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzKRy6fdEWiIll9V3zX-jgJIcsiknRB3-ITUIXaJEMfvbjRGSpjsIE69nJ156ONJIRp/exec"
 GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
 
 
@@ -536,7 +536,7 @@ def show_logo(width=80):
             )
     else:
         st.markdown(
-            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
+            "<h2 style='color:#1e3a8a;margin:0;'>🦅 FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
             unsafe_allow_html=True
         )
 
@@ -545,7 +545,7 @@ def show_logo(width=80):
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
-    st.markdown("<div class='cart-header'> Falcon College Staff Tuckshop</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cart-header'>🦅 Falcon College Tuckshop</div>", unsafe_allow_html=True)
     app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
