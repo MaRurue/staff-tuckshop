@@ -453,6 +453,21 @@ def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
+    # Delete stored number_input widget states so they reinitialise to 0
+    # (Streamlit ignores value= if the widget key already exists in session state)
+    for k in list(st.session_state.keys()):
+        if k.startswith("ni_"):
+            try:
+                del st.session_state[k]
+            except Exception:
+                pass
+    # Also clear any leftover cart checkbox states
+    for k in list(st.session_state.keys()):
+        if k.startswith("cart_cb_"):
+            try:
+                del st.session_state[k]
+            except Exception:
+                pass
 
 
 def logout_seller():
@@ -1012,10 +1027,29 @@ elif app_mode == "🔑 Seller Portal":
                         else:
                             st.error("Restore failed.")
 
-# ── Footer ────────────────────────────────────────────────────────────────────
+# ── Sticky Footer (fixed to viewport bottom) ─────────────────────────────────
 st.markdown("""
-<hr style='border:none;border-top:1px solid #bfdbfe;margin-top:60px;margin-bottom:12px;'>
-<div style='text-align:center;color:#94a3b8;font-size:0.82rem;font-family:Outfit,sans-serif;padding-bottom:20px;'>
-    App by <strong style='color:#1e3a8a;'>Chara</strong>
+<style>
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(to right, #eff6ff, #dbeafe, #eff6ff);
+    border-top: 1px solid #bfdbfe;
+    text-align: center;
+    padding: 7px 0 6px;
+    font-size: 0.8rem;
+    font-family: 'Outfit', sans-serif;
+    color: #94a3b8;
+    letter-spacing: 0.02em;
+}
+.fixed-footer strong { color: #1e3a8a; }
+/* Push page content up so nothing hides behind the footer */
+.main .block-container { padding-bottom: 50px !important; }
+</style>
+<div class='fixed-footer'>
+    App by <strong>Chara</strong>
 </div>
 """, unsafe_allow_html=True)
