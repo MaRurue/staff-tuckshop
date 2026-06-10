@@ -152,7 +152,7 @@ os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
-DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzKRy6fdEWiIll9V3zX-jgJIcsiknRB3-ITUIXaJEMfvbjRGSpjsIE69nJ156ONJIRp/exec"
+DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzo9J3saZPClaUOgS8v-9BVPl3kTmvSRD23-Oxjz4zPdgA67Ec94pMWJ21l8ve2f4yH/exec"
 try:
     GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
 except Exception:
