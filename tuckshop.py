@@ -545,7 +545,7 @@ with st.sidebar:
 if app_mode == "🛒 Staff Storefront":
 
  # ── Cart calculation ───────────────────────────────────────────────────────────
-cart_items = []
+ cart_items = []
 cart_total = 0.0
 for key, qty in list(st.session_state.quantities.items()):
     if qty > 0:
@@ -646,7 +646,7 @@ for key, qty in list(st.session_state.quantities.items()):
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
         def render_product_card(category, row, idx, key_prefix=""):
-    pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+      pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
     cq = st.session_state.quantities.get(pk, 0)
     with st.container(border=True):
         st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
