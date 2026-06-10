@@ -5,7 +5,7 @@ import json
 import requests
 from datetime import datetime
 import streamlit.components.v1 as components
- 
+
 # Set page config
 st.set_page_config(
     page_title="Falcon Staff Purchasing App",
@@ -13,13 +13,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
- 
+
 # Helper to load CSS
 def load_css(file_name):
     if os.path.exists(file_name):
         with open(file_name) as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
- 
+
 # ── Dark-mode-safe inline CSS ──────────────────────────────────────────────────
 # All colours use Streamlit CSS variables so they flip automatically in dark mode.
 st.markdown("""
@@ -57,7 +57,7 @@ st.markdown("""
     padding-top: 8px;
     border-top: 2px solid var(--secondary-background-color);
 }
- 
+
 /* ---- product cards ---- */
 .product-title {
     font-weight: 700;
@@ -77,7 +77,7 @@ st.markdown("""
     color: #10b981;
     margin-bottom: 6px;
 }
- 
+
 /* ---- seller portal stats ---- */
 .stat-card {
     background-color: var(--secondary-background-color);
@@ -99,7 +99,7 @@ st.markdown("""
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
- 
+
 /* ---- order status badges ---- */
 .badge {
     display: inline-block;
@@ -119,7 +119,7 @@ st.markdown("""
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
- 
+
 /* ---- danger zone (clear orders) ---- */
 .danger-zone {
     border: 1px solid rgba(239, 68, 68, 0.35);
@@ -142,21 +142,21 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
- 
+
 # Load custom styles (style.css overrides the above where desired)
 load_css("style.css")
- 
+
 # Ensure orders directory exists
 ORDERS_DIR = "orders"
 os.makedirs(ORDERS_DIR, exist_ok=True)
- 
+
 # Google Sheets Configuration
 DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzKRy6fdEWiIll9V3zX-jgJIcsiknRB3-ITUIXaJEMfvbjRGSpjsIE69nJ156ONJIRp/exec"
 GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
- 
- 
+
+
 # ── Data functions ─────────────────────────────────────────────────────────────
- 
+
 def load_orders():
     if GSHEETS_WEBAPP_URL:
         try:
@@ -180,7 +180,7 @@ def load_orders():
                 return orders, "gspread"
         except Exception:
             pass
- 
+
     # Fallback to local files
     orders = []
     if os.path.exists(ORDERS_DIR):
@@ -195,8 +195,8 @@ def load_orders():
                 pass
     orders.sort(key=lambda x: x.get("order_id", ""), reverse=True)
     return orders, "local"
- 
- 
+
+
 def save_order(order_data):
     success = False
     if GSHEETS_WEBAPP_URL:
@@ -224,8 +224,8 @@ def save_order(order_data):
     except Exception:
         pass
     return success
- 
- 
+
+
 def update_order_status(order_id, status):
     success = False
     if GSHEETS_WEBAPP_URL:
@@ -248,8 +248,8 @@ def update_order_status(order_id, status):
     except Exception:
         pass
     return success
- 
- 
+
+
 def clear_all_orders():
     """Delete every row in the Orders sheet (keeps header) and wipe local JSON files."""
     cloud_ok = False
@@ -261,7 +261,7 @@ def clear_all_orders():
                 cloud_ok = resp.get("success", False)
         except Exception:
             pass
- 
+
     # Always wipe local copies too
     if os.path.exists(ORDERS_DIR):
         for fn in os.listdir(ORDERS_DIR):
@@ -271,8 +271,8 @@ def clear_all_orders():
                 except Exception:
                     pass
     return cloud_ok
- 
- 
+
+
 @st.cache_data
 def load_data_from_excel(source):
     try:
@@ -308,14 +308,14 @@ def load_data_from_excel(source):
         return data, None
     except Exception as e:
         return None, str(e)
- 
- 
+
+
 # ── Product data source ────────────────────────────────────────────────────────
 PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
 excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
 data = None
 load_error = None
- 
+
 if PRODUCTS_URL:
     try:
         import io
@@ -334,32 +334,32 @@ else:
     else:
         st.info("⏳ Waiting for Excel workbook — or set PRODUCTS_GOOGLE_SHEET_URL in Streamlit Secrets.")
         st.stop()
- 
+
 if load_error:
     st.error(f"Error loading Excel workbook: {load_error}")
     st.stop()
 if data is None:
     st.info("Waiting for product data...")
     st.stop()
- 
- 
+
+
 # ── Session state ──────────────────────────────────────────────────────────────
 for key, default in [("quantities", {}), ("order_placed", False), ("latest_order", None),
                      ("seller_authenticated", False), ("confirm_clear", False)]:
     if key not in st.session_state:
         st.session_state[key] = default
- 
- 
+
+
 def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
- 
+
 def logout_seller():
     st.session_state.seller_authenticated = False
     st.session_state.confirm_clear = False
- 
- 
+
+
 # ── Receipt HTML helper ────────────────────────────────────────────────────────
 def generate_receipt_html_helper(order, items_rows):
     return f"""<!DOCTYPE html>
@@ -407,8 +407,8 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
 </div>
 </body>
 </html>"""
- 
- 
+
+
 # ── Cart calculation ───────────────────────────────────────────────────────────
 cart_items = []
 cart_total = 0.0
@@ -424,8 +424,8 @@ for key, qty in list(st.session_state.quantities.items()):
             cart_total += subtotal
         else:
             del st.session_state.quantities[key]
- 
- 
+
+
 # ── Navigation ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("<div class='cart-header'> Navigation</div>", unsafe_allow_html=True)
@@ -436,8 +436,8 @@ with st.sidebar:
     else:
         st.markdown("<div style='text-align:center;color:#f59e0b;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟡 Offline / Local Mode</div>", unsafe_allow_html=True)
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
- 
- 
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # STAFF STOREFRONT
 # ══════════════════════════════════════════════════════════════════════════════
@@ -462,7 +462,7 @@ if app_mode == "🛒 Staff Storefront":
             </div>""", unsafe_allow_html=True)
             st.button("🧹 Clear Cart", on_click=clear_cart, use_container_width=True)
             st.markdown("<div style='margin-top:30px;'></div>", unsafe_allow_html=True)
-            st.markdown("<div class='cart-header'>📋 Checkout Details</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
             staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
             staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
@@ -488,10 +488,10 @@ if app_mode == "🛒 Staff Storefront":
                     st.session_state.order_placed = True
                     st.success("Order processed successfully!")
                     st.rerun()
- 
+
     st.markdown("<h1 style='text-align:center;color:#1e3a8a;'> Falcon Staff Ordering Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Select items, enter checkout details in the sidebar, and print your order receipt.</p>", unsafe_allow_html=True)
- 
+
     if st.session_state.order_placed and st.session_state.latest_order:
         order = st.session_state.latest_order
         st.balloons()
@@ -505,7 +505,7 @@ if app_mode == "🛒 Staff Storefront":
         )
         components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
         st.button("🔄 Back to Tuckshop / Order More", on_click=clear_cart)
- 
+
     else:
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
         if search_query:
@@ -562,15 +562,15 @@ if app_mode == "🛒 Staff Storefront":
                                     if st.button("➕", key=f"i_{pk}_{idx}"):
                                         st.session_state.quantities[pk] = cq + 1
                                         st.rerun()
- 
- 
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 elif app_mode == "🔑 Seller Portal":
     st.markdown("<h1 style='text-align:center;color:#1e3a8a;'> Tuckshop Sales Administration Portal</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.1rem;margin-bottom:30px;'>Log in to review receipts, track daily stats, and mark orders as completed.</p>", unsafe_allow_html=True)
- 
+
     if not st.session_state.seller_authenticated:
         _, col, _ = st.columns([1, 2, 1])
         with col:
@@ -586,22 +586,22 @@ elif app_mode == "🔑 Seller Portal":
                         st.error("Incorrect password. Please try again.")
     else:
         orders, db_source = load_orders()
- 
+
         with st.sidebar:
-            st.markdown("<div class='cart-header'> Admin Session</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'>🔑 Admin Session</div>", unsafe_allow_html=True)
             if db_source == "gspread":
                 st.markdown("<div style='color:#10b981;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
             else:
                 st.markdown("<div style='color:#f59e0b;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟡 Local Fallback Mode</div>", unsafe_allow_html=True)
             st.button("🔄 Refresh Orders", use_container_width=True)
             st.button("🔒 Lock Portal / Log Out", on_click=logout_seller, use_container_width=True)
- 
+
         # Stats
         total_orders = len(orders)
         total_revenue = sum(o.get("total", 0.0) for o in orders)
         pending_orders = sum(1 for o in orders if o.get("status") == "Pending")
         completed_orders = sum(1 for o in orders if o.get("status") == "Completed")
- 
+
         c1, c2, c3, c4 = st.columns(4)
         for col, val, label, color in [
             (c1, total_orders, "Total Orders", "var(--text-color)"),
@@ -615,14 +615,14 @@ elif app_mode == "🔑 Seller Portal":
                     <div class='stat-value' style='color:{color};'>{val}</div>
                     <div class='stat-label'>{label}</div>
                 </div>""", unsafe_allow_html=True)
- 
+
         st.markdown("<div style='margin-top:30px;'></div>", unsafe_allow_html=True)
- 
+
         # Filter
         filter_status = st.radio("Filter Orders by Status:", ["All", "Pending", "Completed"], horizontal=True)
         filtered_orders = [o for o in orders if filter_status == "All" or o.get("status") == filter_status]
         st.markdown(f"### Receipts list ({len(filtered_orders)} orders)")
- 
+
         if not filtered_orders:
             st.info("No orders found matching the selected filter.")
         else:
@@ -669,7 +669,7 @@ elif app_mode == "🔑 Seller Portal":
                                 for i in order["items"]
                             )
                             components.html(generate_receipt_html_helper(order, items_rows), height=450, scrolling=True)
- 
+
         # ── Danger Zone: Clear All Orders ─────────────────────────────────────
         st.markdown("""
         <div class='danger-zone'>
@@ -679,7 +679,7 @@ elif app_mode == "🔑 Seller Portal":
                 Use this to wipe test data before going live. This cannot be undone.
             </div>
         </div>""", unsafe_allow_html=True)
- 
+
         # Two-step confirmation so it can't be hit accidentally
         if not st.session_state.confirm_clear:
             if st.button("🗑️ Clear All Orders", type="secondary", use_container_width=False):
