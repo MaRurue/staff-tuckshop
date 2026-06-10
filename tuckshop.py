@@ -153,7 +153,10 @@ LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
 DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzKRy6fdEWiIll9V3zX-jgJIcsiknRB3-ITUIXaJEMfvbjRGSpjsIE69nJ156ONJIRp/exec"
-GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
+try:
+    GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
+except Exception:
+    GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
 
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
@@ -392,8 +395,13 @@ def load_data_from_excel(source):
 
 
 # ── Product data source ────────────────────────────────────────────────────────
-PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
-excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
+try:
+    PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
+except Exception:
+    PRODUCTS_URL = None
+excel_path = r"C:\Users\Chara RN\Downloads\Products For Staff Purchase.xlsx"
+if not os.path.exists(excel_path):
+    excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
 data = None
 load_error = None
 
@@ -441,10 +449,30 @@ for key, default in [
         st.session_state[key] = default
 
 
+def update_quantity(pk, new_qty, active_key=None):
+    if new_qty > 0:
+        st.session_state.quantities[pk] = new_qty
+    elif pk in st.session_state.quantities:
+        del st.session_state.quantities[pk]
+    for k in list(st.session_state.keys()):
+        if k.startswith("ni_") and pk in k:
+            if active_key is not None and k == active_key:
+                continue
+            try:
+                del st.session_state[k]
+            except KeyError:
+                pass
+
 def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
+    for k in list(st.session_state.keys()):
+        if k.startswith("ni_"):
+            try:
+                del st.session_state[k]
+            except KeyError:
+                pass
 
 
 def logout_seller():
@@ -503,6 +531,22 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
 </html>"""
 
 
+# ── Cart calculation ───────────────────────────────────────────────────────────
+cart_items = []
+cart_total = 0.0
+for key, qty in list(st.session_state.quantities.items()):
+    if qty > 0:
+        parts = key.split("|||")
+        if len(parts) == 4:
+            category, name, uom, price_str = parts
+            price = float(price_str)
+            subtotal = price * qty
+            cart_items.append({"key": key, "category": category, "name": name,
+                                "uom": uom, "price": price, "qty": qty, "subtotal": subtotal})
+            cart_total += subtotal
+        else:
+            del st.session_state.quantities[key]
+
 
 # ── Logo helper ────────────────────────────────────────────────────────────────
 def show_logo(width=80):
@@ -543,24 +587,7 @@ with st.sidebar:
 # STAFF STOREFRONT
 # ══════════════════════════════════════════════════════════════════════════════
 if app_mode == "🛒 Staff Storefront":
-
- # ── Cart calculation ───────────────────────────────────────────────────────────
- cart_items = []
-cart_total = 0.0
-for key, qty in list(st.session_state.quantities.items()):
-    if qty > 0:
-        parts = key.split("|||")
-        if len(parts) == 4:
-            category, name, uom, price_str = parts
-            price = float(price_str)
-            subtotal = price * qty
-            cart_items.append({"key": key, "category": category, "name": name,
-                                "uom": uom, "price": price, "qty": qty, "subtotal": subtotal})
-            cart_total += subtotal
-        else:
-            del st.session_state.quantities[key]
-
-   # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
+    # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
     with st.sidebar:
         st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
         if not cart_items:
@@ -585,8 +612,7 @@ for key, qty in list(st.session_state.quantities.items()):
                 if st.button(" Clear Selected", use_container_width=True):
                     for item in cart_items:
                         if remove_flags.get(item["key"], False):
-                            if item["key"] in st.session_state.quantities:
-                                del st.session_state.quantities[item["key"]]
+                            update_quantity(item["key"], 0)
                     # If cart is now empty, reset the receipt view
                     if not any(q > 0 for q in st.session_state.quantities.values()):
                         st.session_state.order_placed = False
@@ -645,26 +671,26 @@ for key, qty in list(st.session_state.quantities.items()):
     else:
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
-def render_product_card(category, row, idx, key_prefix=""):
-    pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
-    cq = st.session_state.quantities.get(pk, 0)
-    with st.container(border=True):
-        st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
-        new_qty = st.number_input(
-            "Qty",
-            min_value=0,
-            value=cq,
-            step=1,
-            key=f"ni_{key_prefix}_{pk}_{idx}",
-            label_visibility="collapsed"
-        )
-    # Always write back — number_input is the source of truth
-    st.session_state.quantities[pk] = new_qty
+        def render_product_card(category, row, idx, key_prefix=""):
+            """Render a single product card with a single quantity number_input."""
+            pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+            cq = st.session_state.quantities.get(pk, 0)
+            with st.container(border=True):
+                st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
+                new_qty = st.number_input(
+                    "Quantity",
+                    min_value=0,
+                    value=cq,
+                    step=1,
+                    key=f"ni_{key_prefix}{pk}_{idx}"
+                )
+                if new_qty != cq:
+                    update_quantity(pk, new_qty, active_key=f"ni_{key_prefix}{pk}_{idx}")
+                    st.rerun()
 
-
-if search_query:
+        if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
             matches = [(cat, row) for cat, df in data.items()
                        for _, row in df.iterrows()
@@ -676,7 +702,7 @@ if search_query:
                 for i, (category, row) in enumerate(matches):
                     with cols[i % 3]:
                         render_product_card(category, row, i, key_prefix="s_")
-else:
+        else:
             tabs = st.tabs([f"📁 {s}" for s in data.keys()])
             for tab, (sheet, df) in zip(tabs, data.items()):
                 with tab:
@@ -690,7 +716,7 @@ else:
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 elif app_mode == "🔑 Seller Portal":
-show_logo()
+    show_logo()
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Admin portal — manage orders, products, and pricing.</p>", unsafe_allow_html=True)
     st.divider()
 
