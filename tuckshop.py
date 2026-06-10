@@ -1045,7 +1045,7 @@ st.markdown("""
     color: #94a3b8;
     letter-spacing: 0.02em;
 }
-.fixed-footer strong { color: #1e3a8a; }
+.fixed-footer strong { color: #1e293b; }
 /* Push page content up so nothing hides behind the footer */
 .main .block-container { padding-bottom: 50px !important; }
 </style>
