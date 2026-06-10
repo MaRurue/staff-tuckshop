@@ -645,7 +645,7 @@ for key, qty in list(st.session_state.quantities.items()):
     else:
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
-        def render_product_card(category, row, idx, key_prefix=""):
+def render_product_card(category, row, idx, key_prefix=""):
     pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
     cq = st.session_state.quantities.get(pk, 0)
     with st.container(border=True):
@@ -657,11 +657,12 @@ for key, qty in list(st.session_state.quantities.items()):
             min_value=0,
             value=cq,
             step=1,
-            key=f"ni_{key_prefix}{pk}_{idx}",
+            key=f"ni_{key_prefix}_{pk}_{idx}",
             label_visibility="collapsed"
         )
-        # Always write back — number_input is the source of truth
-        st.session_state.quantities[pk] = new_qty
+    # Always write back — number_input is the source of truth
+    st.session_state.quantities[pk] = new_qty
+
 
         if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
