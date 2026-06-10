@@ -664,7 +664,7 @@ def render_product_card(category, row, idx, key_prefix=""):
     st.session_state.quantities[pk] = new_qty
 
 
-        if search_query:
+if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
             matches = [(cat, row) for cat, df in data.items()
                        for _, row in df.iterrows()
@@ -676,7 +676,7 @@ def render_product_card(category, row, idx, key_prefix=""):
                 for i, (category, row) in enumerate(matches):
                     with cols[i % 3]:
                         render_product_card(category, row, i, key_prefix="s_")
-        else:
+else:
             tabs = st.tabs([f"📁 {s}" for s in data.keys()])
             for tab, (sheet, df) in zip(tabs, data.items()):
                 with tab:
@@ -690,7 +690,7 @@ def render_product_card(category, row, idx, key_prefix=""):
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 elif app_mode == "🔑 Seller Portal":
-    show_logo()
+show_logo()
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Admin portal — manage orders, products, and pricing.</p>", unsafe_allow_html=True)
     st.divider()
 
