@@ -152,7 +152,7 @@ os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
-DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbw0Cjo1K_cR69c3ukF4YwhtuNdQEkupwHZKNgPlH3tEnQWKS8vQdPN2BxE6s1QN5xDa/exec"
+GSHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw0Cjo1K_cR69c3ukF4YwhtuNdQEkupwHZKNgPlH3tEnQWKS8vQdPN2BxE6s1QN5xDa/exec"
 
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
