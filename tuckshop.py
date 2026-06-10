@@ -503,22 +503,6 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
 </html>"""
 
 
-# ── Cart calculation ───────────────────────────────────────────────────────────
-cart_items = []
-cart_total = 0.0
-for key, qty in list(st.session_state.quantities.items()):
-    if qty > 0:
-        parts = key.split("|||")
-        if len(parts) == 4:
-            category, name, uom, price_str = parts
-            price = float(price_str)
-            subtotal = price * qty
-            cart_items.append({"key": key, "category": category, "name": name,
-                                "uom": uom, "price": price, "qty": qty, "subtotal": subtotal})
-            cart_total += subtotal
-        else:
-            del st.session_state.quantities[key]
-
 
 # ── Logo helper ────────────────────────────────────────────────────────────────
 def show_logo(width=80):
@@ -559,7 +543,24 @@ with st.sidebar:
 # STAFF STOREFRONT
 # ══════════════════════════════════════════════════════════════════════════════
 if app_mode == "🛒 Staff Storefront":
-    # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
+
+ # ── Cart calculation ───────────────────────────────────────────────────────────
+cart_items = []
+cart_total = 0.0
+for key, qty in list(st.session_state.quantities.items()):
+    if qty > 0:
+        parts = key.split("|||")
+        if len(parts) == 4:
+            category, name, uom, price_str = parts
+            price = float(price_str)
+            subtotal = price * qty
+            cart_items.append({"key": key, "category": category, "name": name,
+                                "uom": uom, "price": price, "qty": qty, "subtotal": subtotal})
+            cart_total += subtotal
+        else:
+            del st.session_state.quantities[key]
+
+   # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
     with st.sidebar:
         st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
         if not cart_items:
@@ -645,23 +646,22 @@ if app_mode == "🛒 Staff Storefront":
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
         def render_product_card(category, row, idx, key_prefix=""):
-            """Render a single product card with a single quantity number_input."""
-            pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
-            cq = st.session_state.quantities.get(pk, 0)
-            with st.container(border=True):
-                st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
-                new_qty = st.number_input(
-                    "Quantity",
-                    min_value=0,
-                    value=cq,
-                    step=1,
-                    key=f"ni_{key_prefix}{pk}_{idx}"
-                )
-                if new_qty != cq:
-                    st.session_state.quantities[pk] = new_qty
-                    st.rerun()
+    pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+    cq = st.session_state.quantities.get(pk, 0)
+    with st.container(border=True):
+        st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
+        new_qty = st.number_input(
+            "Qty",
+            min_value=0,
+            value=cq,
+            step=1,
+            key=f"ni_{key_prefix}{pk}_{idx}",
+            label_visibility="collapsed"
+        )
+        # Always write back — number_input is the source of truth
+        st.session_state.quantities[pk] = new_qty
 
         if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
