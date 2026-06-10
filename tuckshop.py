@@ -152,11 +152,8 @@ os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
-DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzo9J3saZPClaUOgS8v-9BVPl3kTmvSRD23-Oxjz4zPdgA67Ec94pMWJ21l8ve2f4yH/exec"
-try:
-    GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
-except Exception:
-    GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
+DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbzKRy6fdEWiIll9V3zX-jgJIcsiknRB3-ITUIXaJEMfvbjRGSpjsIE69nJ156ONJIRp/exec"
+GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
 
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
@@ -395,13 +392,8 @@ def load_data_from_excel(source):
 
 
 # ── Product data source ────────────────────────────────────────────────────────
-try:
-    PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
-except Exception:
-    PRODUCTS_URL = None
-excel_path = r"C:\Users\Chara RN\Downloads\Products For Staff Purchase.xlsx"
-if not os.path.exists(excel_path):
-    excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
+PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
+excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
 data = None
 load_error = None
 
@@ -449,18 +441,11 @@ for key, default in [
         st.session_state[key] = default
 
 
-def update_quantity(pk, new_qty, active_key=None):
-    if new_qty > 0:
-        st.session_state.quantities[pk] = new_qty
-    elif pk in st.session_state.quantities:
-        del st.session_state.quantities[pk]
-    # 🌟 Removed the "del st.session_state[k]" loop completely!
-
 def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
-    # 🌟 Removed the "del st.session_state[k]" loop completely!
+
 
 def logout_seller():
     st.session_state.seller_authenticated = False
@@ -599,7 +584,8 @@ if app_mode == "🛒 Staff Storefront":
                 if st.button(" Clear Selected", use_container_width=True):
                     for item in cart_items:
                         if remove_flags.get(item["key"], False):
-                            update_quantity(item["key"], 0)
+                            if item["key"] in st.session_state.quantities:
+                                del st.session_state.quantities[item["key"]]
                     # If cart is now empty, reset the receipt view
                     if not any(q > 0 for q in st.session_state.quantities.values()):
                         st.session_state.order_placed = False
@@ -674,7 +660,7 @@ if app_mode == "🛒 Staff Storefront":
                     key=f"ni_{key_prefix}{pk}_{idx}"
                 )
                 if new_qty != cq:
-                    update_quantity(pk, new_qty, active_key=f"ni_{key_prefix}{pk}_{idx}")
+                    st.session_state.quantities[pk] = new_qty
                     st.rerun()
 
         if search_query:
