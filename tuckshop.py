@@ -153,7 +153,10 @@ LOGO_PATH = "falconlogo blue.jpg"
 
 # Google Sheets Configuration
 DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbx9YAuNsKiB-vTaquGscjPKX9cC4xFrHEesIm66UeMYUIi4qY_oOzfg0aVS0HPJg6j3/exec"
-GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
+try:
+    GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
+except Exception:
+    GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
 
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
@@ -392,8 +395,13 @@ def load_data_from_excel(source):
 
 
 # ── Product data source ────────────────────────────────────────────────────────
-PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
-excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
+try:
+    PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
+except Exception:
+    PRODUCTS_URL = None
+excel_path = r"C:\Users\Chara RN\Downloads\Products For Staff Purchase.xlsx"
+if not os.path.exists(excel_path):
+    excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
 data = None
 load_error = None
 
@@ -584,8 +592,12 @@ if app_mode == "🛒 Staff Storefront":
                 if st.button(" Remove Unticked", use_container_width=True):
                     for item in cart_items:
                         if not keep_flags.get(item["key"], True):
-                            if item["key"] in st.session_state.quantities:
-                                del st.session_state.quantities[item["key"]]
+                            # Remove from quantities
+                            st.session_state.quantities.pop(item["key"], None)
+                            # Clear the checkbox state so it doesn't reappear
+                            cb_key = f"cart_cb_{item['key']}"
+                            if cb_key in st.session_state:
+                                del st.session_state[cb_key]
                     st.rerun()
             with col_clear:
                 st.button(" Clear All", on_click=clear_cart, use_container_width=True)
@@ -641,35 +653,26 @@ if app_mode == "🛒 Staff Storefront":
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
         def render_product_card(category, row, idx, key_prefix=""):
-            """Render a single product card with ➖ / number_input / ➕ controls."""
+            """Render a single product card with a full-width quantity number_input."""
             pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
             cq = st.session_state.quantities.get(pk, 0)
             with st.container(border=True):
                 st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
-                c1, c2, c3 = st.columns([1, 3, 1])
-                with c1:
-                    if st.button("➖", key=f"d_{key_prefix}{pk}_{idx}"):
-                        if cq > 0:
-                            st.session_state.quantities[pk] = cq - 1
-                            st.rerun()
-                with c2:
-                    new_qty = st.number_input(
-                        "Qty",
-                        min_value=0,
-                        value=cq,
-                        step=1,
-                        label_visibility="collapsed",
-                        key=f"ni_{key_prefix}{pk}_{idx}"
-                    )
-                    if new_qty != cq:
+                new_qty = st.number_input(
+                    "Quantity",
+                    min_value=0,
+                    value=cq,
+                    step=1,
+                    key=f"ni_{key_prefix}{pk}_{idx}"
+                )
+                if new_qty != cq:
+                    if new_qty > 0:
                         st.session_state.quantities[pk] = new_qty
-                        st.rerun()
-                with c3:
-                    if st.button("➕", key=f"i_{key_prefix}{pk}_{idx}"):
-                        st.session_state.quantities[pk] = cq + 1
-                        st.rerun()
+                    else:
+                        st.session_state.quantities.pop(pk, None)
+                    st.rerun()
 
         if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
@@ -1008,3 +1011,11 @@ elif app_mode == "🔑 Seller Portal":
                             st.cache_data.clear()
                         else:
                             st.error("Restore failed.")
+
+# ── Footer ────────────────────────────────────────────────────────────────────
+st.markdown("""
+<hr style='border:none;border-top:1px solid #bfdbfe;margin-top:60px;margin-bottom:12px;'>
+<div style='text-align:center;color:#94a3b8;font-size:0.82rem;font-family:Outfit,sans-serif;padding-bottom:20px;'>
+    App by <strong style='color:#1e3a8a;'>Chara</strong>
+</div>
+""", unsafe_allow_html=True)
