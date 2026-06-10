@@ -581,14 +581,14 @@ if app_mode == "🛒 Staff Storefront":
 
             col_remove, col_clear = st.columns(2)
             with col_remove:
-                if st.button("➖ Remove Unchecked", use_container_width=True):
+                if st.button(" Remove Unticked", use_container_width=True):
                     for item in cart_items:
                         if not keep_flags.get(item["key"], True):
                             if item["key"] in st.session_state.quantities:
                                 del st.session_state.quantities[item["key"]]
                     st.rerun()
             with col_clear:
-                st.button("🧹 Clear All", on_click=clear_cart, use_container_width=True)
+                st.button(" Clear All", on_click=clear_cart, use_container_width=True)
 
             st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
             st.markdown("<div class='cart-header'>📋 Checkout Details</div>", unsafe_allow_html=True)
@@ -642,7 +642,7 @@ if app_mode == "🛒 Staff Storefront":
 
         def render_product_card(category, row, idx, key_prefix=""):
             """Render a single product card with ➖ / number_input / ➕ controls."""
-            pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+            """ pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
             cq = st.session_state.quantities.get(pk, 0)
             with st.container(border=True):
                 st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
@@ -669,7 +669,7 @@ if app_mode == "🛒 Staff Storefront":
                 with c3:
                     if st.button("➕", key=f"i_{key_prefix}{pk}_{idx}"):
                         st.session_state.quantities[pk] = cq + 1
-                        st.rerun()
+                        st.rerun()"""
 
         if search_query:
             st.markdown(f"### Search Results for *\"{search_query}\"*")
