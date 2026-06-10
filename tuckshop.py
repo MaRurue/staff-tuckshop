@@ -536,7 +536,7 @@ def show_logo(width=80):
             )
     else:
         st.markdown(
-            "<h2 style='color:#1e3a8a;margin:0;'>🦅 FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
+            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
             unsafe_allow_html=True
         )
 
