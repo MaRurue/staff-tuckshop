@@ -154,11 +154,6 @@ LOGO_PATH = "falconlogo blue.jpg"
 # Google Sheets Configuration
 DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbw0Cjo1K_cR69c3ukF4YwhtuNdQEkupwHZKNgPlH3tEnQWKS8vQdPN2BxE6s1QN5xDa/exec"
 
-"""try:
-    GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
-except Exception:
-    GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL"""
-
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
 
