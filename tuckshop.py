@@ -1037,16 +1037,16 @@ st.markdown("""
     left: 0;
     right: 0;
     z-index: 9999;
-    background: linear-gradient(to right, #eff6ff, #dbeafe, #eff6ff);
-    border-top: 1px solid #bfdbfe;
+    background: #0f1b35;
+    border-top: 1px solid #1e3f7a;
     text-align: center;
     padding: 7px 0 6px;
     font-size: 0.8rem;
     font-family: 'Outfit', sans-serif;
-    color: #1e293b;
+    color: #ffffff;
     letter-spacing: 0.02em;
 }
-.fixed-footer strong { color: #1e293b; }
+.fixed-footer strong { color: #ffffff; }
 /* Push page content up so nothing hides behind the footer */
 .main .block-container { padding-bottom: 50px !important; }
 </style>
