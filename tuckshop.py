@@ -773,7 +773,24 @@ elif app_mode == "🔑 Seller Portal":
         # ══════════════════════════════════════════════════════════════════════
         # TAB 1 — ORDERS
         # ══════════════════════════════════════════════════════════════════════
-        with portal_tab_orders:
+        import datetime
+        import streamlit as st
+
+# Get current weekday (0 = Monday, 6 = Sunday)
+today = datetime.datetime.today().weekday()
+
+# Allowed days: Friday (4), Saturday (5), Sunday (6), Monday (0)
+allowed_days = [4, 5, 6, 0]
+
+if today in allowed_days:
+    st.success("✅ Staff ordering is open!")
+    # Place your order form code here
+    # e.g., st.text_input("Enter product..."), st.button("Submit Order")
+else:
+    st.error("❌ Staff ordering is only allowed between Friday and Monday.")
+    st.stop()  # Prevents the rest of the order form from running
+
+with portal_tab_orders:
             filter_status = st.radio("Filter Orders by Status:", ["All", "Pending", "Completed"], horizontal=True)
             filtered_orders = [o for o in orders if filter_status == "All" or o.get("status") == filter_status]
             st.markdown(f"### Receipts list ({len(filtered_orders)} orders)")
