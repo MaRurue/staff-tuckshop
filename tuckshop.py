@@ -23,26 +23,6 @@ def load_css(file_name):
 # ── Inline CSS (dark-mode safe variables + blue theme overrides) ───────────────
 st.markdown("""
 <style>
-# Embed logo as base64 so it works in fixed HTML
-if os.path.exists(LOGO_PATH):
-    import base64
-    with open(LOGO_PATH, "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
-    logo_img = f'<img src="data:image/jpeg;base64,{logo_b64}" style="height:40px;width:40px;border-radius:8px;object-fit:cover;">'
-else:
-    logo_img = '<div style="width:40px;height:40px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:0.9rem;">FC</div>'
-
-st.markdown(f"""
-<div class="top-ribbon">
-  <div class="ribbon-brand">
-    {logo_img}
-    <div>
-      <div class="ribbon-title-main">Falcon College — Tuckshop</div>
-      <div class="ribbon-title-sub">Staff Purchases Dashboard</div>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
 /* ---- cart / sidebar elements ---- */
 .cart-header {
     font-size: 1rem;
@@ -158,43 +138,6 @@ st.markdown(f"""
     color: var(--text-color);
     opacity: 0.7;
     margin-bottom: 14px;
-}
-/* Push content down for ribbon */
-.main .block-container { padding-top: 78px !important; }
-
-/* Fixed top ribbon */
-.top-ribbon {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 9999;
-    background: #1e3a8a;
-    border-bottom: 2px solid #1e40af;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    height: 62px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-}
-.ribbon-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.ribbon-title-main {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #ffffff;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-.ribbon-title-sub {
-    font-size: 0.68rem;
-    color: #93c5fd;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -502,7 +445,6 @@ for key, default in [
     ("confirm_clear", False),
     ("confirm_delete_selected", False),
     ("orders_to_delete", []),
-    ("app_mode", "storefront"),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -628,17 +570,7 @@ with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
     st.markdown("<div class='cart-header'> Falcon College Tuckshop</div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-with col1:
-    if st.button("🛒 Storefront", use_container_width=True,
-                 type="primary" if st.session_state.app_mode == "storefront" else "secondary"):
-        st.session_state.app_mode = "storefront"
-        st.rerun()
-with col2:
-    if st.button("🔑 Seller", use_container_width=True,
-                 type="primary" if st.session_state.app_mode == "seller" else "secondary"):
-        st.session_state.app_mode = "seller"
-        st.rerun()
+    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
         st.markdown("<div style='text-align:center;color:#10b981;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟢 Cloud Connected</div>", unsafe_allow_html=True)
@@ -650,7 +582,7 @@ with col2:
 # ══════════════════════════════════════════════════════════════════════════════
 # STAFF STOREFRONT
 # ══════════════════════════════════════════════════════════════════════════════
-if st.session_state.app_mode == "storefront":
+if app_mode == "🛒 Staff Storefront":
     # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
     with st.sidebar:
         st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
@@ -783,7 +715,7 @@ if st.session_state.app_mode == "storefront":
 # ══════════════════════════════════════════════════════════════════════════════
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.app_mode == "seller":
+elif app_mode == "🔑 Seller Portal":
     show_logo()
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Admin portal — manage orders, products, and pricing.</p>", unsafe_allow_html=True)
     st.divider()
