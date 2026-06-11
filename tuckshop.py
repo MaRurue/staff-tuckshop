@@ -4,6 +4,7 @@ import os
 import json
 import requests
 from datetime import datetime
+import datetime
 import streamlit.components.v1 as components
 
 # Set page config
@@ -620,8 +621,14 @@ if app_mode == "🛒 Staff Storefront":
 
             st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
             st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
-            staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
-            staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
+            # Restrict ordering days
+            today = datetime.date.today().weekday()
+            allowed_days = [4, 5, 6, 0]
+            if today not in allowed_days:
+             st.error("❌ Staff ordering is only allowed between Friday and Monday.")
+            st.stop()
+            staff_name = st.text_input("Full Name", placeholder="e.g. Chara Mabeza")
+            staff_id = st.text_input("Staff Department", placeholder="e.g. IT")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
