@@ -11,197 +11,139 @@ st.set_page_config(
     page_title="Falcon Staff Purchasing App",
     page_icon="🛒",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# ── Inline CSS ─────────────────────────────────────────────────────────────────
+# Helper to load CSS
+def load_css(file_name):
+    if os.path.exists(file_name):
+        with open(file_name) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# ── Inline CSS (dark-mode safe variables + blue theme overrides) ───────────────
 st.markdown("""
 <style>
-/* ── Hide Streamlit chrome & sidebar ── */
-#MainMenu, footer, header { visibility: hidden; }
-[data-testid="collapsedControl"] { display: none !important; }
-[data-testid="stSidebar"] { display: none !important; }
-
-/* ── Body padding: leave room for fixed top bar (70px) and fixed bottom cart (68px) ── */
-.main .block-container {
-    padding-top: 80px !important;
-    padding-bottom: 90px !important;
-    max-width: 1200px;
-}
-
-/* ══════════════════════════════
-   FIXED TOP NAV BAR
-══════════════════════════════ */
-.top-nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 1000;
-    background: #0f1b35;
-    border-bottom: 2px solid #1e3f7a;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    height: 64px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-}
-.nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.nav-title-main {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-.nav-title-sub {
-    font-size: 0.7rem;
-    color: #60a5fa;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-.nav-db-status {
-    font-size: 0.78rem;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.nav-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #10b981;
-    display: inline-block;
-}
-
-/* ══════════════════════════════
-   FIXED BOTTOM CART BAR
-══════════════════════════════ */
-.cart-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 1000;
-    background: #fff;
-    border-top: 2px solid #dbeafe;
-    box-shadow: 0 -4px 20px rgba(37,99,235,0.10);
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 28px;
-}
-.cart-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1e3a8a;
-}
-.cart-bar-count {
-    background: #dbeafe;
-    color: #1e3a8a;
-    border-radius: 20px;
-    padding: 2px 12px;
-    font-size: 0.82rem;
-    font-weight: 700;
-}
-.cart-bar-empty {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    font-style: italic;
-}
-.cart-bar-total {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #2563eb;
-}
-
-/* ══════════════════════════════
-   CART EXPANDED PANEL
-══════════════════════════════ */
-.cart-panel-wrap {
-    position: fixed;
-    bottom: 64px; left: 0; right: 0;
-    z-index: 999;
-    background: #fff;
-    border-top: 1.5px solid #dbeafe;
-    box-shadow: 0 -6px 28px rgba(37,99,235,0.10);
-    padding: 20px 28px 18px;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-/* ── cart / sidebar elements (kept from original) ── */
+/* ---- cart / sidebar elements ---- */
 .cart-header {
     font-size: 1rem;
     font-weight: 700;
     color: var(--text-color);
     margin-bottom: 8px;
 }
-.cart-item { padding: 8px 0; border-bottom: 1px solid var(--secondary-background-color); }
-.cart-item-title { font-weight: 600; font-size: 0.9rem; color: var(--text-color); }
+.cart-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--secondary-background-color);
+}
+.cart-item-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
 .cart-item-details {
-    display: flex; justify-content: space-between;
-    font-size: 0.82rem; color: var(--text-color); opacity: 0.8;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 .cart-total {
-    display: flex; justify-content: space-between;
-    font-weight: 700; font-size: 1rem; color: var(--text-color);
-    margin-top: 10px; padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-top: 10px;
+    padding-top: 8px;
     border-top: 2px solid var(--secondary-background-color);
 }
 
-/* ── product cards (original) ── */
-.product-title { font-weight: 700; font-size: 0.95rem; color: var(--text-color); margin-bottom: 2px; }
-.product-meta { font-size: 0.78rem; color: var(--text-color); opacity: 0.65; margin-bottom: 4px; }
-.product-price { font-size: 1.1rem; font-weight: 700; color: #10b981; margin-bottom: 6px; }
+/* ---- product cards ---- */
+.product-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin-bottom: 2px;
+}
+.product-meta {
+    font-size: 0.78rem;
+    color: var(--text-color);
+    opacity: 0.65;
+    margin-bottom: 4px;
+}
+.product-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 6px;
+}
 
-/* ── seller portal stats ── */
+/* ---- seller portal stats ---- */
 .stat-card {
     background-color: var(--secondary-background-color);
-    border-radius: 10px; padding: 18px 16px; text-align: center;
+    border-radius: 10px;
+    padding: 18px 16px;
+    text-align: center;
     border: 1px solid rgba(128,128,128,0.15);
 }
-.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text-color); }
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
 .stat-label {
-    font-size: 0.78rem; color: var(--text-color); opacity: 0.6;
-    margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+    font-size: 0.78rem;
+    color: var(--text-color);
+    opacity: 0.6;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-/* ── order status badges ── */
+/* ---- order status badges ---- */
 .badge {
-    display: inline-block; padding: 2px 10px; border-radius: 999px;
-    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em;
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
 }
-.badge-pending { background-color: rgba(234,179,8,0.18); color: #ca8a04; border: 1px solid rgba(234,179,8,0.35); }
-.badge-completed { background-color: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+.badge-pending {
+    background-color: rgba(234, 179, 8, 0.18);
+    color: #ca8a04;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+}
+.badge-completed {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
 
-/* ── danger zone ── */
+/* ---- danger zone (clear orders) ---- */
 .danger-zone {
-    border: 1px solid rgba(239,68,68,0.35); border-radius: 10px;
-    padding: 18px 20px; background-color: rgba(239,68,68,0.05); margin-top: 32px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 10px;
+    padding: 18px 20px;
+    background-color: rgba(239, 68, 68, 0.05);
+    margin-top: 32px;
 }
-.danger-zone-title { font-weight: 700; font-size: 1rem; color: #ef4444; margin-bottom: 6px; }
-.danger-zone-desc { font-size: 0.85rem; color: var(--text-color); opacity: 0.7; margin-bottom: 14px; }
-
-/* ── footer ── */
-.fixed-footer {
-    position: fixed;
-    bottom: 64px; left: 0; right: 0;
-    z-index: 997;
-    text-align: center;
-    font-size: 0.72rem;
-    color: #94a3b8;
-    pointer-events: none;
+.danger-zone-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ef4444;
+    margin-bottom: 6px;
+}
+.danger-zone-desc {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-bottom: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
+
+# Load custom styles
+load_css("style.css")
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 ORDERS_DIR = "orders"
@@ -209,15 +151,19 @@ OVERRIDES_FILE = "product_overrides.json"
 os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
-# Google Sheets — hardcoded URL (no secrets needed)
+# Google Sheets Configuration
 DEFAULT_GSHEETS_URL = "https://script.google.com/macros/s/AKfycbw0CjolK_cR69c3ukF4VyhtuNdQEKupwHZKNpPIH3tEnQWKS8vQdPN2BxE6S1QNSxDa/exec"
 
 try:
     GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
 except Exception:
     GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
-# ── Product overrides ──────────────────────────────────────────────────────────
+
+
+# ── Product overrides (local persistence for admin-added / edited items) ───────
+
 def load_product_overrides():
+    """Returns dict: {sheet_name: [{Product, UOM, Cost price}, ...]}"""
     if os.path.exists(OVERRIDES_FILE):
         try:
             with open(OVERRIDES_FILE) as f:
@@ -225,6 +171,7 @@ def load_product_overrides():
         except Exception:
             pass
     return {}
+
 
 def save_product_overrides(overrides: dict):
     try:
@@ -234,11 +181,19 @@ def save_product_overrides(overrides: dict):
     except Exception:
         return False
 
+
 def apply_overrides(data: dict, overrides: dict) -> dict:
+    """
+    Merge overrides into the loaded product data.
+    - Price edits update existing rows in-place.
+    - New rows (product name not in sheet) are appended.
+    """
     import copy
     result = copy.deepcopy(data)
+
     for sheet_name, rows in overrides.items():
         if sheet_name not in result:
+            # Brand-new category sheet from admin
             result[sheet_name] = pd.DataFrame(rows, columns=["Product", "UOM", "Cost price"])
         else:
             df = result[sheet_name].copy()
@@ -248,13 +203,18 @@ def apply_overrides(data: dict, overrides: dict) -> dict:
                     df.loc[mask, "Cost price"] = float(row["Cost price"])
                     df.loc[mask, "UOM"] = row["UOM"]
                 else:
-                    new_row = pd.DataFrame([{"Product": row["Product"], "UOM": row["UOM"],
-                                             "Cost price": float(row["Cost price"])}])
+                    new_row = pd.DataFrame([{
+                        "Product": row["Product"],
+                        "UOM": row["UOM"],
+                        "Cost price": float(row["Cost price"])
+                    }])
                     df = pd.concat([df, new_row], ignore_index=True)
             result[sheet_name] = df.sort_values("Product").reset_index(drop=True)
     return result
 
-# ── Order functions ────────────────────────────────────────────────────────────
+
+# ── Order data functions ───────────────────────────────────────────────────────
+
 def load_orders():
     if GSHEETS_WEBAPP_URL:
         try:
@@ -264,71 +224,91 @@ def load_orders():
                 for order in orders:
                     items = order.get("items", [])
                     if isinstance(items, str):
-                        try: order["items"] = json.loads(items)
-                        except Exception: order["items"] = []
-                    if "status" not in order: order["status"] = "Pending"
-                    try: order["total"] = float(order.get("total", 0))
-                    except (ValueError, TypeError): order["total"] = 0.0
+                        try:
+                            order["items"] = json.loads(items)
+                        except Exception:
+                            order["items"] = []
+                    if "status" not in order:
+                        order["status"] = "Pending"
+                    try:
+                        order["total"] = float(order.get("total", 0))
+                    except (ValueError, TypeError):
+                        order["total"] = 0.0
                 orders.sort(key=lambda x: x.get("order_id", ""), reverse=True)
                 return orders, "gspread"
         except Exception:
             pass
+
     orders = []
     if os.path.exists(ORDERS_DIR):
         for file_name in [f for f in os.listdir(ORDERS_DIR) if f.startswith("order_") and f.endswith(".json")]:
             try:
                 with open(os.path.join(ORDERS_DIR, file_name)) as f:
                     o = json.load(f)
-                    if "status" not in o: o["status"] = "Pending"
+                    if "status" not in o:
+                        o["status"] = "Pending"
                     orders.append(o)
             except Exception:
                 pass
     orders.sort(key=lambda x: x.get("order_id", ""), reverse=True)
     return orders, "local"
 
+
 def save_order(order_data):
     success = False
     if GSHEETS_WEBAPP_URL:
         try:
             payload = {
-                "action": "create", "order_id": order_data["order_id"],
-                "date": order_data["date"], "staff_name": order_data["staff_name"],
-                "staff_id": order_data["staff_id"], "total": order_data["total"],
-                "status": order_data["status"], "items": order_data["items"]
+                "action": "create",
+                "order_id": order_data["order_id"],
+                "date": order_data["date"],
+                "staff_name": order_data["staff_name"],
+                "staff_id": order_data["staff_id"],
+                "total": order_data["total"],
+                "status": order_data["status"],
+                "items": order_data["items"]
             }
             r = requests.post(GSHEETS_WEBAPP_URL, json=payload, timeout=10)
-            if r.status_code == 200: success = True
+            if r.status_code == 200:
+                success = True
         except Exception:
             pass
     try:
         with open(os.path.join(ORDERS_DIR, f"order_{order_data['order_id']}.json"), "w") as f:
             json.dump(order_data, f, indent=4)
-        if not GSHEETS_WEBAPP_URL: success = True
+        if not GSHEETS_WEBAPP_URL:
+            success = True
     except Exception:
         pass
     return success
+
 
 def update_order_status(order_id, status):
     success = False
     if GSHEETS_WEBAPP_URL:
         try:
-            r = requests.post(GSHEETS_WEBAPP_URL,
-                              json={"action": "update_status", "order_id": order_id, "status": status}, timeout=10)
-            if r.status_code == 200: success = True
+            r = requests.post(GSHEETS_WEBAPP_URL, json={"action": "update_status", "order_id": order_id, "status": status}, timeout=10)
+            if r.status_code == 200:
+                success = True
         except Exception:
             pass
     try:
         fp = os.path.join(ORDERS_DIR, f"order_{order_id}.json")
         if os.path.exists(fp):
-            with open(fp) as f: od = json.load(f)
+            with open(fp) as f:
+                od = json.load(f)
             od["status"] = status
-            with open(fp, "w") as f: json.dump(od, f, indent=4)
-            if not GSHEETS_WEBAPP_URL: success = True
+            with open(fp, "w") as f:
+                json.dump(od, f, indent=4)
+            if not GSHEETS_WEBAPP_URL:
+                success = True
     except Exception:
         pass
     return success
 
+
 def clear_all_orders():
+    """Delete every row in the Orders sheet (keeps header) and wipe local JSON files."""
     cloud_ok = False
     if GSHEETS_WEBAPP_URL:
         try:
@@ -338,32 +318,46 @@ def clear_all_orders():
                 cloud_ok = resp.get("success", False)
         except Exception:
             pass
+
     if os.path.exists(ORDERS_DIR):
         for fn in os.listdir(ORDERS_DIR):
             if fn.startswith("order_") and fn.endswith(".json"):
-                try: os.remove(os.path.join(ORDERS_DIR, fn))
-                except Exception: pass
+                try:
+                    os.remove(os.path.join(ORDERS_DIR, fn))
+                except Exception:
+                    pass
     return cloud_ok
 
+
 def delete_orders_by_ids(order_ids: list):
+    """Delete specific orders by their order_id from cloud and local storage."""
     cloud_ok = False
     if GSHEETS_WEBAPP_URL:
         try:
-            r = requests.post(GSHEETS_WEBAPP_URL,
-                              json={"action": "delete_selected", "order_ids": order_ids}, timeout=15)
+            r = requests.post(
+                GSHEETS_WEBAPP_URL,
+                json={"action": "delete_selected", "order_ids": order_ids},
+                timeout=15
+            )
             if r.status_code == 200:
                 resp = r.json()
                 cloud_ok = resp.get("success", False)
         except Exception:
             pass
+
+    # Always wipe local copies
     for oid in order_ids:
         fp = os.path.join(ORDERS_DIR, f"order_{oid}.json")
         if os.path.exists(fp):
-            try: os.remove(fp)
-            except Exception: pass
+            try:
+                os.remove(fp)
+            except Exception:
+                pass
     return cloud_ok
 
+
 # ── Product data loading ───────────────────────────────────────────────────────
+
 @st.cache_data
 def load_data_from_excel(source):
     try:
@@ -380,16 +374,19 @@ def load_data_from_excel(source):
             if not product_col or not cost_col:
                 continue
             rename = {product_col: 'Product', cost_col: 'Cost price'}
-            if uom_col: rename[uom_col] = 'UOM'
+            if uom_col:
+                rename[uom_col] = 'UOM'
             df.rename(columns=rename, inplace=True)
-            if 'UOM' not in df.columns: df['UOM'] = ''
+            if 'UOM' not in df.columns:
+                df['UOM'] = ''
             df = df.dropna(subset=['Product', 'Cost price'])
             df['Product'] = df['Product'].astype(str).str.strip()
             df['UOM'] = df['UOM'].astype(str).str.strip().fillna('')
             df['Cost price'] = pd.to_numeric(df['Cost price'], errors='coerce')
             df = df.dropna(subset=['Cost price'])
             df = df[df['Product'].str.len() > 0].sort_values('Product')
-            if not df.empty: data[sheet] = df
+            if not df.empty:
+                data[sheet] = df
         if not data:
             debug = " | ".join(f"Sheet '{s}': {list(xl.parse(s).columns[:10])}" for s in xl.sheet_names)
             return None, f"No valid product sheets found. Need 'Product' and 'Cost price' columns. Found: {debug}"
@@ -397,12 +394,12 @@ def load_data_from_excel(source):
     except Exception as e:
         return None, str(e)
 
+
 # ── Product data source ────────────────────────────────────────────────────────
 try:
     PRODUCTS_URL = st.secrets.get("PRODUCTS_GOOGLE_SHEET_URL", None)
 except Exception:
     PRODUCTS_URL = None
-
 excel_path = r"C:\Users\Chara RN\Downloads\Products For Staff Purchase.xlsx"
 if not os.path.exists(excel_path):
     excel_path = r"C:\Users\Chara RN\Downloads\Products available for staff to purchase.xlsx"
@@ -420,7 +417,7 @@ if PRODUCTS_URL:
 elif os.path.exists(excel_path):
     data, load_error = load_data_from_excel(excel_path)
 else:
-    uploaded_file = st.file_uploader("Upload the tuckshop products Excel workbook:", type=["xlsx"])
+    uploaded_file = st.file_uploader(" Upload the tuckshop products Excel workbook:", type=["xlsx"])
     if uploaded_file is not None:
         import io
         data, load_error = load_data_from_excel(io.BytesIO(uploaded_file.read()))
@@ -435,6 +432,7 @@ if data is None:
     st.info("Waiting for product data...")
     st.stop()
 
+# Apply any admin overrides
 overrides = load_product_overrides()
 data = apply_overrides(data, overrides)
 
@@ -447,21 +445,31 @@ for key, default in [
     ("confirm_clear", False),
     ("confirm_delete_selected", False),
     ("orders_to_delete", []),
-    ("app_mode", "storefront"),
-    ("cart_expanded", False),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
+
 
 def clear_cart():
     st.session_state.quantities = {}
     st.session_state.order_placed = False
     st.session_state.latest_order = None
-    st.session_state.cart_expanded = False
+    # Delete stored number_input widget states so they reinitialise to 0
+    # (Streamlit ignores value= if the widget key already exists in session state)
     for k in list(st.session_state.keys()):
-        if k.startswith("ni_") or k.startswith("cart_cb_"):
-            try: del st.session_state[k]
-            except Exception: pass
+        if k.startswith("ni_"):
+            try:
+                del st.session_state[k]
+            except Exception:
+                pass
+    # Also clear any leftover cart checkbox states
+    for k in list(st.session_state.keys()):
+        if k.startswith("cart_cb_"):
+            try:
+                del st.session_state[k]
+            except Exception:
+                pass
+
 
 def logout_seller():
     st.session_state.seller_authenticated = False
@@ -469,7 +477,8 @@ def logout_seller():
     st.session_state.confirm_delete_selected = False
     st.session_state.orders_to_delete = []
 
-# ── Receipt HTML ───────────────────────────────────────────────────────────────
+
+# ── Receipt HTML helper ────────────────────────────────────────────────────────
 def generate_receipt_html_helper(order, items_rows):
     return f"""<!DOCTYPE html>
 <html>
@@ -517,6 +526,7 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
 </body>
 </html>"""
 
+
 # ── Cart calculation ───────────────────────────────────────────────────────────
 cart_items = []
 cart_total = 0.0
@@ -532,75 +542,114 @@ for key, qty in list(st.session_state.quantities.items()):
             cart_total += subtotal
         else:
             del st.session_state.quantities[key]
-cart_count = sum(i["qty"] for i in cart_items)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# FIXED TOP NAV BAR
-# ══════════════════════════════════════════════════════════════════════════════
-# Brand side (pure HTML — no Streamlit widgets here)
-st.markdown("""
-<div class="top-nav">
-  <div class="nav-brand">
-    <img src="app/static/falconlogo_blue.jpg"
-         onerror="this.style.display='none';document.getElementById('fc-fallback').style.display='flex';"
-         style="height:40px;width:40px;border-radius:8px;object-fit:cover;">
-    <span id="fc-fallback"
-          style="display:none;width:40px;height:40px;background:#2563eb;border-radius:8px;
-                 align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:0.95rem;">FC</span>
-    <div>
-      <div class="nav-title-main">Falcon College — Tuckshop</div>
-      <div class="nav-title-sub">Staff Purchases Dashboard</div>
-    </div>
-  </div>
-  <div class="nav-db-status">
-    <span class="nav-dot"></span> Google Sheets Active
-  </div>
-</div>
-""", unsafe_allow_html=True)
 
-# Mode-switch buttons: rendered by Streamlit but visually pulled into the nav bar
-st.markdown("""
-<style>
-/* Float the very first horizontal block (our nav buttons row) into the top bar */
-section.main > div.block-container > div:first-child > div:first-child > div[data-testid="stHorizontalBlock"] {
-    position: fixed !important;
-    top: 12px !important;
-    right: 20px !important;
-    z-index: 1001 !important;
-    width: auto !important;
-    gap: 8px !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-/* Make nav buttons look like a proper nav pill pair */
-section.main > div.block-container > div:first-child > div:first-child > div[data-testid="stHorizontalBlock"] .stButton > button {
-    padding: 6px 18px !important;
-    font-size: 0.88rem !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
-    height: 38px !important;
-    white-space: nowrap !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# ── Logo helper ────────────────────────────────────────────────────────────────
+def show_logo(width=80):
+    if os.path.exists(LOGO_PATH):
+        col_logo, col_title = st.columns([1, 6])
+        with col_logo:
+            st.image(LOGO_PATH, width=width)
+        with col_title:
+            st.markdown(
+                "<div style='padding-top:10px;'>"
+                "<span style='font-size:1.6rem;font-weight:800;color:#1e3a8a;'>FALCON COLLEGE</span><br>"
+                "<span style='font-size:0.85rem;color:#3b82f6;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;'>"
+                "Tuckshop Staff Ordering Portal</span></div>",
+                unsafe_allow_html=True
+            )
+    else:
+        st.markdown(
+            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
+            unsafe_allow_html=True
+        )
 
-nb1, nb2 = st.columns([1, 1])
-with nb1:
-    if st.button("🛒 Staff Storefront", use_container_width=True,
-                 type="primary" if st.session_state.app_mode == "storefront" else "secondary"):
-        st.session_state.app_mode = "storefront"
-        st.rerun()
-with nb2:
-    if st.button("🔑 Seller Portal", use_container_width=True,
-                 type="primary" if st.session_state.app_mode == "seller" else "secondary"):
-        st.session_state.app_mode = "seller"
-        st.rerun()
+
+# ── Navigation ─────────────────────────────────────────────────────────────────
+with st.sidebar:
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=70)
+    st.markdown("<div class='cart-header'> Falcon College Tuckshop</div>", unsafe_allow_html=True)
+    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
+    db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
+    if db_status == "gspread":
+        st.markdown("<div style='text-align:center;color:#10b981;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟢 Cloud Connected</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='text-align:center;color:#f59e0b;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟡 Offline / Local Mode</div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STAFF STOREFRONT
 # ══════════════════════════════════════════════════════════════════════════════
-if st.session_state.app_mode == "storefront":
+if app_mode == "🛒 Staff Storefront":
+    # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
+    with st.sidebar:
+        st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
+        if not cart_items:
+            st.write("Your cart is empty. Add items from the catalog.")
+        else:
+            # Track which items to keep (checkbox checked = keep)
+            keep_flags = {}
+            for item in cart_items:
+                keep_flags[item["key"]] = st.checkbox(
+                    f"**{item['name']}**  \n{item['qty']} × ${item['price']:.2f} ({item['uom']}) = **${item['subtotal']:.2f}**",
+                    value=True,
+                    key=f"cart_cb_{item['key']}"
+                )
+
+            st.markdown(f"""
+            <div class='cart-total'>
+                <span>TOTAL DUE:</span><span>${cart_total:.2f}</span>
+            </div>""", unsafe_allow_html=True)
+
+            col_remove, col_clear = st.columns(2)
+            with col_remove:
+                if st.button(" Remove Unticked", use_container_width=True):
+                    for item in cart_items:
+                        if not keep_flags.get(item["key"], True):
+                            # Remove from quantities
+                            st.session_state.quantities.pop(item["key"], None)
+                            # Clear the checkbox state so it doesn't reappear
+                            cb_key = f"cart_cb_{item['key']}"
+                            if cb_key in st.session_state:
+                                del st.session_state[cb_key]
+                    st.rerun()
+            with col_clear:
+                st.button(" Clear All", on_click=clear_cart, use_container_width=True)
+
+            st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
+            staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
+            staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
+            if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
+                if not staff_name.strip():
+                    st.error("Please enter your name.")
+                elif not staff_id.strip():
+                    st.error("Please enter your Staff ID or Department.")
+                else:
+                    order_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                    order_data = {
+                        "order_id": order_id,
+                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "staff_name": staff_name.strip(),
+                        "staff_id": staff_id.strip(),
+                        "status": "Pending",
+                        "items": [{"category": i["category"], "name": i["name"], "uom": i["uom"],
+                                   "price": i["price"], "qty": i["qty"], "subtotal": i["subtotal"]}
+                                  for i in cart_items],
+                        "total": cart_total
+                    }
+                    save_order(order_data)
+                    st.session_state.latest_order = order_data
+                    st.session_state.order_placed = True
+                    st.success("Order processed successfully!")
+                    st.rerun()
+
+    # ── Main area ──────────────────────────────────────────────────────────────
+    show_logo()
+    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt.</p>", unsafe_allow_html=True)
+    st.divider()
 
     if st.session_state.order_placed and st.session_state.latest_order:
         order = st.session_state.latest_order
@@ -620,6 +669,7 @@ if st.session_state.app_mode == "storefront":
         search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
 
         def render_product_card(category, row, idx, key_prefix=""):
+            """Render a single product card with a full-width quantity number_input."""
             pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
             cq = st.session_state.quantities.get(pk, 0)
             with st.container(border=True):
@@ -627,12 +677,17 @@ if st.session_state.app_mode == "storefront":
                 st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
                 new_qty = st.number_input(
-                    "Quantity", min_value=0, value=cq, step=1,
+                    "Quantity",
+                    min_value=0,
+                    value=cq,
+                    step=1,
                     key=f"ni_{key_prefix}{pk}_{idx}"
                 )
                 if new_qty != cq:
-                    if new_qty > 0: st.session_state.quantities[pk] = new_qty
-                    else: st.session_state.quantities.pop(pk, None)
+                    if new_qty > 0:
+                        st.session_state.quantities[pk] = new_qty
+                    else:
+                        st.session_state.quantities.pop(pk, None)
                     st.rerun()
 
         if search_query:
@@ -656,63 +711,15 @@ if st.session_state.app_mode == "storefront":
                         with cols[idx % 3]:
                             render_product_card(sheet, row, idx, key_prefix="t_")
 
-        # ── Cart expanded panel (slides up from bottom bar) ────────────────────
-        if st.session_state.cart_expanded and cart_items:
-            st.markdown("<div class='cart-panel-wrap'>", unsafe_allow_html=True)
-            st.markdown("#### 🛒 Your Cart")
-            keep_flags = {}
-            for item in cart_items:
-                keep_flags[item["key"]] = st.checkbox(
-                    f"**{item['name']}**  \n{item['qty']} × ${item['price']:.2f} ({item['uom']}) = **${item['subtotal']:.2f}**",
-                    value=True, key=f"cart_cb_{item['key']}"
-                )
-            st.markdown(f"""<div class='cart-total'><span>TOTAL DUE:</span><span>${cart_total:.2f}</span></div>""",
-                        unsafe_allow_html=True)
-            col_remove, col_clear = st.columns(2)
-            with col_remove:
-                if st.button("Remove Unticked", use_container_width=True):
-                    for item in cart_items:
-                        if not keep_flags.get(item["key"], True):
-                            st.session_state.quantities.pop(item["key"], None)
-                            cb_key = f"cart_cb_{item['key']}"
-                            if cb_key in st.session_state: del st.session_state[cb_key]
-                    st.rerun()
-            with col_clear:
-                st.button("Clear All", on_click=clear_cart, use_container_width=True)
-
-            st.markdown("---")
-            st.markdown("#### Checkout")
-            staff_name = st.text_input("Full Name", placeholder="e.g. John Doe", key="co_name")
-            staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402", key="co_id")
-            if st.button("✅ Place Order & Get Receipt", type="primary", use_container_width=True):
-                if not staff_name.strip():
-                    st.error("Please enter your name.")
-                elif not staff_id.strip():
-                    st.error("Please enter your Staff ID or Department.")
-                else:
-                    order_id = datetime.now().strftime("%Y%m%d%H%M%S")
-                    order_data = {
-                        "order_id": order_id,
-                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "staff_name": staff_name.strip(),
-                        "staff_id": staff_id.strip(),
-                        "status": "Pending",
-                        "items": [{"category": i["category"], "name": i["name"], "uom": i["uom"],
-                                   "price": i["price"], "qty": i["qty"], "subtotal": i["subtotal"]}
-                                  for i in cart_items],
-                        "total": cart_total
-                    }
-                    save_order(order_data)
-                    st.session_state.latest_order = order_data
-                    st.session_state.order_placed = True
-                    st.success("Order processed!")
-                    st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SELLER PORTAL  (unchanged from original)
+# SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.app_mode == "seller":
+elif app_mode == "🔑 Seller Portal":
+    show_logo()
+    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Admin portal — manage orders, products, and pricing.</p>", unsafe_allow_html=True)
+    st.divider()
+
     if not st.session_state.seller_authenticated:
         _, col, _ = st.columns([1, 2, 1])
         with col:
@@ -729,16 +736,16 @@ elif st.session_state.app_mode == "seller":
     else:
         orders, db_source = load_orders()
 
-        ctrl1, ctrl2, ctrl3 = st.columns([6, 1, 1])
-        with ctrl1:
-            sync = "🟢 Cloud Sync Active" if db_source == "gspread" else "🟡 Local Fallback Mode"
-            st.markdown(f"<span style='font-size:0.9rem;font-weight:bold;color:#64748b;'>{sync}</span>",
-                        unsafe_allow_html=True)
-        with ctrl2:
-            if st.button("🔄 Refresh Orders", use_container_width=True): st.rerun()
-        with ctrl3:
-            st.button("🔒 Log Out", on_click=logout_seller, use_container_width=True)
+        with st.sidebar:
+            st.markdown("<div class='cart-header'>⚙️ Admin Session</div>", unsafe_allow_html=True)
+            if db_source == "gspread":
+                st.markdown("<div style='color:#10b981;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div style='color:#f59e0b;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟡 Local Fallback Mode</div>", unsafe_allow_html=True)
+            st.button("🔄 Refresh Orders", use_container_width=True)
+            st.button("🔒 Lock Portal / Log Out", on_click=logout_seller, use_container_width=True)
 
+        # ── Stats ──────────────────────────────────────────────────────────────
         total_orders = len(orders)
         total_revenue = sum(o.get("total", 0.0) for o in orders)
         pending_orders = sum(1 for o in orders if o.get("status") == "Pending")
@@ -759,25 +766,35 @@ elif st.session_state.app_mode == "seller":
                 </div>""", unsafe_allow_html=True)
 
         st.markdown("<div style='margin-top:30px;'></div>", unsafe_allow_html=True)
-        portal_tab_orders, portal_tab_products = st.tabs(["📋 Orders", "🏷️ Manage Products"])
 
+        # ── Portal Tabs ────────────────────────────────────────────────────────
+        portal_tab_orders, portal_tab_products = st.tabs([" Orders", " Manage Products"])
+
+        # ══════════════════════════════════════════════════════════════════════
+        # TAB 1 — ORDERS
+        # ══════════════════════════════════════════════════════════════════════
         with portal_tab_orders:
             filter_status = st.radio("Filter Orders by Status:", ["All", "Pending", "Completed"], horizontal=True)
             filtered_orders = [o for o in orders if filter_status == "All" or o.get("status") == filter_status]
-            st.markdown(f"### Orders ({len(filtered_orders)})")
+            st.markdown(f"### Receipts list ({len(filtered_orders)} orders)")
 
             if not filtered_orders:
                 st.info("No orders found matching the selected filter.")
             else:
+                # ── Per-order checkboxes for selective deletion ───────────────
                 selected_order_ids = []
                 for idx, order in enumerate(filtered_orders):
                     badge_class = "badge-pending" if order["status"] == "Pending" else "badge-completed"
                     with st.container(border=True):
                         col_cb, col_info, col_toggle = st.columns([0.3, 3, 1])
                         with col_cb:
-                            is_selected = st.checkbox("Select", key=f"sel_{order['order_id']}_{idx}",
-                                                      label_visibility="collapsed")
-                            if is_selected: selected_order_ids.append(order["order_id"])
+                            is_selected = st.checkbox(
+                                "Select",
+                                key=f"sel_{order['order_id']}_{idx}",
+                                label_visibility="collapsed"
+                            )
+                            if is_selected:
+                                selected_order_ids.append(order["order_id"])
                         with col_info:
                             st.markdown(f"""
                             <div style='display:flex;align-items:center;gap:15px;margin-bottom:6px;'>
@@ -785,26 +802,25 @@ elif st.session_state.app_mode == "seller":
                                 <span class='badge {badge_class}'>{order['status']}</span>
                             </div>
                             <div style='font-size:0.9rem;color:var(--text-color);opacity:0.85;'>
-                                <strong>{order['staff_name']}</strong> ({order['staff_id']}) &nbsp;|&nbsp;
-                                {order['date']} &nbsp;|&nbsp;
-                                <strong style='color:#10b981;'>${order['total']:.2f}</strong>
+                                <strong>Staff:</strong> {order['staff_name']} ({order['staff_id']}) &nbsp;|&nbsp;
+                                <strong>Date:</strong> {order['date']} &nbsp;|&nbsp;
+                                <strong>Total:</strong> <strong style='color:#10b981;'>${order['total']:.2f}</strong>
                             </div>""", unsafe_allow_html=True)
                         with col_toggle:
                             if order["status"] == "Pending":
-                                if st.button("Mark Completed ✅", key=f"complete_{order['order_id']}_{idx}",
-                                             use_container_width=True):
+                                if st.button("Mark Completed ✅", key=f"complete_{order['order_id']}_{idx}", use_container_width=True):
                                     if update_order_status(order["order_id"], "Completed"):
                                         st.success(f"Order #{order['order_id']} marked as completed!")
                                         st.rerun()
                                     else:
-                                        st.error("Failed to update status.")
+                                        st.error("Failed to update status. Please try again.")
                             else:
-                                if st.button("Mark Pending ⏳", key=f"pending_{order['order_id']}_{idx}",
-                                             use_container_width=True):
+                                if st.button("Mark Pending ⏳", key=f"pending_{order['order_id']}_{idx}", use_container_width=True):
                                     if update_order_status(order["order_id"], "Pending"):
+                                        st.success(f"Order #{order['order_id']} marked as pending.")
                                         st.rerun()
                                     else:
-                                        st.error("Failed to update status.")
+                                        st.error("Failed to update status. Please try again.")
                         with st.expander("🔍 View Items / Print Receipt"):
                             table_md = "| Product | Category | UOM | Qty | Cost | Subtotal |\n| :--- | :--- | :--- | :---: | :---: | :---: |\n"
                             for item in order["items"]:
@@ -819,6 +835,7 @@ elif st.session_state.app_mode == "seller":
                                 )
                                 components.html(generate_receipt_html_helper(order, items_rows), height=450, scrolling=True)
 
+                # ── Delete Selected ───────────────────────────────────────────
                 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
                 if selected_order_ids:
                     st.info(f"**{len(selected_order_ids)}** order(s) selected for deletion.")
@@ -828,7 +845,7 @@ elif st.session_state.app_mode == "seller":
                             st.session_state.confirm_delete_selected = True
                             st.rerun()
                     else:
-                        st.warning(f"⚠️ Permanently delete **{len(st.session_state.orders_to_delete)}** order(s)?")
+                        st.warning(f"⚠️ Are you sure you want to permanently delete **{len(st.session_state.orders_to_delete)}** order(s)? This cannot be undone.")
                         col_yes, col_no = st.columns(2)
                         with col_yes:
                             if st.button("✅ Yes, delete selected", type="primary", use_container_width=True):
@@ -836,7 +853,10 @@ elif st.session_state.app_mode == "seller":
                                     cloud_ok = delete_orders_by_ids(st.session_state.orders_to_delete)
                                 st.session_state.confirm_delete_selected = False
                                 st.session_state.orders_to_delete = []
-                                st.success("Deleted." if cloud_ok else "Local deleted; cloud sync may be pending.")
+                                if cloud_ok:
+                                    st.success("Selected orders deleted from Google Sheets and local storage.")
+                                else:
+                                    st.warning("Local orders deleted. Cloud sync may need the updated Apps Script — check the plan for the snippet.")
                                 st.rerun()
                         with col_no:
                             if st.button("❌ Cancel", use_container_width=True):
@@ -844,12 +864,16 @@ elif st.session_state.app_mode == "seller":
                                 st.session_state.orders_to_delete = []
                                 st.rerun()
 
+            # ── Danger Zone: Clear All Orders ─────────────────────────────────
             st.markdown("""
             <div class='danger-zone'>
                 <div class='danger-zone-title'>⚠️ WARNING</div>
-                <div class='danger-zone-desc'>Permanently deletes <strong>all orders</strong> from Google Sheets and local storage. Cannot be undone.</div>
+                <div class='danger-zone-desc'>
+                    Permanently deletes <strong>all orders</strong> from Google Sheets and local storage.
+                    Use this to wipe test data before going live. This cannot be undone.
+                </div>
             </div>""", unsafe_allow_html=True)
-            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
             if not st.session_state.confirm_clear:
                 if st.button("🗑️ Clear All Orders", type="secondary"):
                     st.session_state.confirm_clear = True
@@ -862,17 +886,29 @@ elif st.session_state.app_mode == "seller":
                         with st.spinner("Clearing orders..."):
                             cloud_ok = clear_all_orders()
                         st.session_state.confirm_clear = False
-                        st.success("All orders cleared." if cloud_ok else "Local cleared; check your Google Sheet.")
+                        if cloud_ok:
+                            st.success("All orders cleared from Google Sheets and local storage.")
+                        else:
+                            st.warning("Local orders cleared. Cloud sync may not have completed — check the Orders tab in your sheet.")
                         st.rerun()
                 with col_no:
                     if st.button("❌ Cancel", use_container_width=True):
                         st.session_state.confirm_clear = False
                         st.rerun()
 
+        # ══════════════════════════════════════════════════════════════════════
+        # TAB 2 — MANAGE PRODUCTS
+        # ══════════════════════════════════════════════════════════════════════
         with portal_tab_products:
-            st.markdown("### 🏷️ Product Catalogue Management")
-            st.info("💡 Add new items or update prices here. The source Excel is never modified.")
+            st.markdown("###  Product Catalogue Management")
+            st.markdown(
+                "Add new items or update prices here. Changes are saved to a local override file "
+                "and applied immediately on all sessions after the next page refresh. "
+                "The source Excel / Google Sheet is never modified."
+            )
+            st.info("💡 Price edits take effect immediately for new orders. Existing orders are not affected.")
 
+            # ── Add New Product ────────────────────────────────────────────────
             with st.expander("➕ Add a New Product", expanded=False):
                 all_categories = list(data.keys())
                 col_a, col_b = st.columns(2)
@@ -884,6 +920,7 @@ elif st.session_state.app_mode == "seller":
                 with col_b:
                     new_uom = st.text_input("Unit of Measure (UOM)", placeholder="e.g. Each, kg, 500ml", key="new_prod_uom").strip()
                     new_price = st.number_input("Price ($)", min_value=0.0, step=0.10, format="%.2f", key="new_prod_price")
+
                 if st.button("💾 Add Product", type="primary", key="btn_add_product"):
                     if not new_product_name:
                         st.error("Product name cannot be empty.")
@@ -894,41 +931,61 @@ elif st.session_state.app_mode == "seller":
                     else:
                         ov = load_product_overrides()
                         cat_rows = ov.get(new_category, [])
+                        # Check for duplicates
                         existing = [r for r in cat_rows if r["Product"].lower() == new_product_name.lower()]
                         if existing:
-                            st.warning(f"'{new_product_name}' already exists in '{new_category}'. Use the edit section to update its price.")
+                            st.warning(f"'{new_product_name}' already exists in '{new_category}'. Use the edit section below to update its price.")
                         else:
-                            cat_rows.append({"Product": new_product_name, "UOM": new_uom, "Cost price": new_price})
+                            cat_rows.append({
+                                "Product": new_product_name,
+                                "UOM": new_uom,
+                                "Cost price": new_price
+                            })
                             ov[new_category] = cat_rows
                             if save_product_overrides(ov):
-                                st.success(f"✅ '{new_product_name}' added to '{new_category}' at ${new_price:.2f}.")
+                                st.success(f"✅ '{new_product_name}' added to '{new_category}' at ${new_price:.2f}. Refresh the storefront to see it.")
                                 st.cache_data.clear()
                             else:
-                                st.error("Failed to save. Check file write permissions.")
+                                st.error("Failed to save product. Check file write permissions.")
 
-            st.markdown("#### ✏️ Edit Product Prices")
+            # ── Edit Existing Prices ───────────────────────────────────────────
+            st.markdown("####  Edit Product Prices")
+            st.markdown("Select a category to see all products and update their prices.")
             selected_edit_cat = st.selectbox("Category to Edit", list(data.keys()), key="edit_cat_select")
+
             if selected_edit_cat:
                 df_edit = data[selected_edit_cat].reset_index(drop=True)
                 current_overrides = load_product_overrides()
+                override_lookup = {
+                    r["Product"]: r for r in current_overrides.get(selected_edit_cat, [])
+                }
+
                 st.markdown(f"**{len(df_edit)} products in '{selected_edit_cat}'**")
+                changes_made = {}
+
+                # Show in groups of columns for compactness
                 for idx, row in df_edit.iterrows():
                     product_name = row["Product"]
                     current_price = float(row["Cost price"])
                     current_uom = str(row["UOM"])
+
                     with st.container(border=False):
                         e1, e2, e3, e4 = st.columns([3, 2, 2, 1])
                         with e1:
                             st.markdown(f"**{product_name}**  \n<span style='color:#64748b;font-size:0.8rem;'>{current_uom}</span>", unsafe_allow_html=True)
                         with e2:
-                            new_uom_edit = st.text_input("UOM", value=current_uom,
-                                                         key=f"edit_uom_{selected_edit_cat}_{idx}",
-                                                         label_visibility="collapsed")
+                            new_uom_edit = st.text_input(
+                                "UOM", value=current_uom,
+                                key=f"edit_uom_{selected_edit_cat}_{idx}",
+                                label_visibility="collapsed"
+                            )
                         with e3:
-                            new_price_edit = st.number_input("Price", value=current_price, min_value=0.0,
-                                                             step=0.10, format="%.2f",
-                                                             key=f"edit_price_{selected_edit_cat}_{idx}",
-                                                             label_visibility="collapsed")
+                            new_price_edit = st.number_input(
+                                "Price", value=current_price,
+                                min_value=0.0, step=0.10, format="%.2f",
+                                key=f"edit_price_{selected_edit_cat}_{idx}",
+                                label_visibility="collapsed"
+                            )
                         with e4:
                             if st.button("💾", key=f"save_edit_{selected_edit_cat}_{idx}", help="Save this price"):
                                 ov = load_product_overrides()
@@ -941,96 +998,59 @@ elif st.session_state.app_mode == "seller":
                                         updated = True
                                         break
                                 if not updated:
-                                    cat_rows.append({"Product": product_name, "UOM": new_uom_edit, "Cost price": new_price_edit})
+                                    cat_rows.append({
+                                        "Product": product_name,
+                                        "UOM": new_uom_edit,
+                                        "Cost price": new_price_edit
+                                    })
                                 ov[selected_edit_cat] = cat_rows
                                 if save_product_overrides(ov):
                                     st.success(f"✅ '{product_name}' → ${new_price_edit:.2f}")
                                     st.cache_data.clear()
                                 else:
                                     st.error("Save failed.")
+
                     st.divider()
 
+                # ── Remove an Override (restore original price) ─────────────
                 if current_overrides.get(selected_edit_cat):
-                    st.markdown("##### ↩️ Restore Original Prices")
+                    st.markdown("#####  Restore Original Prices")
                     override_names = [r["Product"] for r in current_overrides.get(selected_edit_cat, [])]
-                    restore_product = st.selectbox("Select product to restore", override_names, key="restore_select")
+                    restore_product = st.selectbox("Select product to restore to original Excel price", override_names, key="restore_select")
                     if st.button("↩️ Restore Original Price", key="btn_restore"):
                         ov = load_product_overrides()
                         ov[selected_edit_cat] = [r for r in ov.get(selected_edit_cat, []) if r["Product"] != restore_product]
-                        if not ov[selected_edit_cat]: del ov[selected_edit_cat]
+                        if not ov[selected_edit_cat]:
+                            del ov[selected_edit_cat]
                         if save_product_overrides(ov):
-                            st.success(f"✅ '{restore_product}' restored to original price.")
+                            st.success(f"✅ '{restore_product}' restored to original Excel price.")
                             st.cache_data.clear()
                         else:
                             st.error("Restore failed.")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# FIXED BOTTOM CART BAR (storefront only, not on receipt page)
-# ══════════════════════════════════════════════════════════════════════════════
-if st.session_state.app_mode == "storefront" and not st.session_state.order_placed:
-    if cart_items:
-        cart_bar_html = f"""
-        <div class="cart-bar">
-          <div class="cart-bar-left">
-            <span style="font-size:1.3rem;">🛒</span>
-            <span>Your Cart</span>
-            <span class="cart-bar-count">{cart_count} item{'s' if cart_count != 1 else ''}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:16px;">
-            <span class="cart-bar-total">${cart_total:.2f}</span>
-          </div>
-        </div>"""
-    else:
-        cart_bar_html = """
-        <div class="cart-bar">
-          <div class="cart-bar-left">
-            <span style="font-size:1.3rem;">🛒</span>
-            <span style="font-weight:700;color:#1e3a8a;">Your Cart</span>
-            <span class="cart-bar-count">0 items</span>
-          </div>
-          <span class="cart-bar-empty">Choose items from the catalog sheets left and set quantities to begin checking out.</span>
-        </div>"""
-
-    st.markdown(cart_bar_html, unsafe_allow_html=True)
-
-    # "Review Cart" button floats just above the bottom bar (only when cart has items)
-    if cart_items:
-        toggle_label = "▲ Review Cart & Checkout" if not st.session_state.cart_expanded else "▼ Hide Cart"
-        st.markdown(f"""
-        <style>
-        .cart-toggle-btn {{
-            position: fixed;
-            bottom: 68px;
-            right: 28px;
-            z-index: 1001;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 20px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(37,99,235,0.30);
-            font-family: inherit;
-        }}
-        .cart-toggle-btn:hover {{ background: #1d4ed8; }}
-        </style>
-        <button class="cart-toggle-btn"
-                onclick="window.parent.document.querySelector('[data-testid=\\"stVerticalBlock\\"]').dispatchEvent(new Event('click'))">
-            {toggle_label}
-        </button>
-        """, unsafe_allow_html=True)
-        # Real Streamlit button hidden — drives the actual toggle
-        st.markdown("<div style='display:none;'>", unsafe_allow_html=True)
-        if st.button("cart_toggle_hidden", key="cart_toggle_btn"):
-            st.session_state.cart_expanded = not st.session_state.cart_expanded
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# ── Footer ─────────────────────────────────────────────────────────────────────
-st.markdown(
-    f"<div class='fixed-footer'>Portal Environment UTC: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} · App by Chara</div>",
-    unsafe_allow_html=True
-)
- 
+# ── Sticky Footer (fixed to viewport bottom) ─────────────────────────────────
+st.markdown("""
+<style>
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(to right, #eff6ff, #dbeafe, #eff6ff);
+    border-top: 1px solid #bfdbfe;
+    text-align: center;
+    padding: 7px 0 6px;
+    font-size: 0.8rem;
+    font-family: 'Outfit', sans-serif;
+    color: #1e293b;
+    letter-spacing: 0.02em;
+}
+.fixed-footer strong { color: #1e293b; }
+/* Push page content up so nothing hides behind the footer */
+.main .block-container { padding-bottom: 50px !important; }
+</style>
+<div class='fixed-footer'>
+    App by <strong>Chara</strong>
+</div>
+""", unsafe_allow_html=True)
