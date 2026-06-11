@@ -620,14 +620,8 @@ if app_mode == "🛒 Staff Storefront":
 
             st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
             st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
-            # Restrict ordering days
-            today = datetime.date.today().weekday()
-            allowed_days = [4, 5, 6, 0]
-            if today not in allowed_days:
-             st.error("❌ Staff ordering is only allowed between Friday and Monday.")
-            st.stop()
-            staff_name = st.text_input("Full Name", placeholder="e.g. Chara Mabeza")
-            staff_id = st.text_input("Staff Department", placeholder="e.g. IT")
+            staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
+            staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
@@ -779,24 +773,7 @@ elif app_mode == "🔑 Seller Portal":
         # ══════════════════════════════════════════════════════════════════════
         # TAB 1 — ORDERS
         # ══════════════════════════════════════════════════════════════════════
-        import datetime
-        import streamlit as st
-
-# Get current weekday (0 = Monday, 6 = Sunday)
-today = datetime.datetime.today().weekday()
-
-# Allowed days: Friday (4), Saturday (5), Sunday (6), Monday (0)
-allowed_days = [4, 5, 6, 0]
-
-if today in allowed_days:
-    st.success("✅ Staff ordering is open!")
-    # Place your order form code here
-    # e.g., st.text_input("Enter product..."), st.button("Submit Order")
-else:
-    st.error("❌ Staff ordering is only allowed between Friday and Monday.")
-    st.stop()  # Prevents the rest of the order form from running
-
-with portal_tab_orders:
+        with portal_tab_orders:
             filter_status = st.radio("Filter Orders by Status:", ["All", "Pending", "Completed"], horizontal=True)
             filtered_orders = [o for o in orders if filter_status == "All" or o.get("status") == filter_status]
             st.markdown(f"### Receipts list ({len(filtered_orders)} orders)")
@@ -922,7 +899,7 @@ with portal_tab_orders:
         # ══════════════════════════════════════════════════════════════════════
         # TAB 2 — MANAGE PRODUCTS
         # ══════════════════════════════════════════════════════════════════════
-with portal_tab_products:
+        with portal_tab_products:
             st.markdown("###  Product Catalogue Management")
             st.markdown(
                 "Add new items or update prices here. Changes are saved to a local override file "
