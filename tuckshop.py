@@ -916,7 +916,7 @@ with portal_tab_orders:
         # ══════════════════════════════════════════════════════════════════════
         # TAB 2 — MANAGE PRODUCTS
         # ══════════════════════════════════════════════════════════════════════
-        with portal_tab_products:
+with portal_tab_products:
             st.markdown("###  Product Catalogue Management")
             st.markdown(
                 "Add new items or update prices here. Changes are saved to a local override file "
