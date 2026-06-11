@@ -4,7 +4,6 @@ import os
 import json
 import requests
 from datetime import datetime
-import datetime
 import streamlit.components.v1 as components
 
 # Set page config
