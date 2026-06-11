@@ -626,7 +626,7 @@ if app_mode == "🛒 Staff Storefront":
             allowed_days = [4, 5, 6, 0]
             if today not in allowed_days:
              st.error("❌ Staff ordering is only allowed between Friday and Monday.")
-            st.stop()
+             st.stop()
             staff_name = st.text_input("Full Name", placeholder="e.g. Chara Mabeza")
             staff_id = st.text_input("Staff Department", placeholder="e.g. IT")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
