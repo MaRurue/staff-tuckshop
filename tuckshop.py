@@ -506,7 +506,7 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
 <body>
 <div class="print-btn-container"><button class="print-btn" onclick="window.print()">🖨️ PRINT / SAVE RECEIPT</button></div>
 <div class="receipt-container">
-  <div class="header"><div class="title">FALCON COLLEGE</div><div class="subtitle">TUCKSHOP — STAFF ORDER RECEIPT</div></div>
+  <div class="header"><div class="title">FALCON COLLEGE</div><div class="subtitle">SHOP — STAFF ORDER RECEIPT</div></div>
   <div class="info-section">
     <strong>Order ID:</strong> {order["order_id"]}<br>
     <strong>Date:</strong> {order["date"]}<br>
@@ -521,7 +521,7 @@ body{{font-family:'Space Mono',monospace;color:#000;background:#fff;margin:0;pad
   <div class="divider"></div>
   <div class="total-row"><span>TOTAL:</span><span>${order["total"]:.2f}</span></div>
   <div class="divider"></div>
-  <div class="footer">Thank you for your order!<br>Please present this receipt at the tuckshop to collect your items.</div>
+  <div class="footer">Thank you for your order!<br>Please present this receipt at the shop to collect your items.</div>
 </div>
 </body>
 </html>"""
@@ -555,12 +555,12 @@ def show_logo(width=80):
                 "<div style='padding-top:10px;'>"
                 "<span style='font-size:1.6rem;font-weight:800;color:#1e3a8a;'>FALCON COLLEGE</span><br>"
                 "<span style='font-size:0.85rem;color:#3b82f6;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;'>"
-                "Tuckshop Staff Ordering Portal</span></div>",
+                "Staff Shop: Ordering Portal</span></div>",
                 unsafe_allow_html=True
             )
     else:
         st.markdown(
-            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Tuckshop Staff Ordering Portal</h2>",
+            "<h2 style='color:#1e3a8a;margin:0;'> FALCON COLLEGE — Staff Shop: Ordering Portal</h2>",
             unsafe_allow_html=True
         )
 
@@ -569,7 +569,7 @@ def show_logo(width=80):
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
-    st.markdown("<div class='cart-header'> Falcon College Tuckshop</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cart-header'> Falcon College Staff Shop</div>", unsafe_allow_html=True)
     app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
@@ -655,7 +655,7 @@ if app_mode == "🛒 Staff Storefront":
         order = st.session_state.latest_order
         st.balloons()
         st.markdown("<h3 style='text-align:center;'>🎉 Order Successfully Placed!</h3>", unsafe_allow_html=True)
-        st.markdown("Please print the receipt below and present it to the tuckshop to collect your order.")
+        st.markdown("Please print the receipt below and present it to the shop to collect your order.")
         items_rows = "".join(
             f"<tr><td>{i['name']}<br><small>{i['uom']} @ ${i['price']:.2f}</small></td>"
             f"<td style='text-align:center;'>{i['qty']}</td>"
@@ -663,10 +663,10 @@ if app_mode == "🛒 Staff Storefront":
             for i in order["items"]
         )
         components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
-        st.button("🔄 Back to Tuckshop / Order More", on_click=clear_cart)
+        st.button("🔄 Back to Shop / Order More", on_click=clear_cart)
 
     else:
-        search_query = st.text_input("🔍 Search tuckshop items...", "").strip().lower()
+        search_query = st.text_input("🔍 Search shop items...", "").strip().lower()
 
         def render_product_card(category, row, idx, key_prefix=""):
             """Render a single product card with a full-width quantity number_input."""
