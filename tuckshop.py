@@ -620,13 +620,13 @@ if app_mode == "🛒 Staff Storefront":
 
             st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
             st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
-            staff_name = st.text_input("Full Name", placeholder="e.g. John Doe")
-            staff_id = st.text_input("Staff ID / Department", placeholder="e.g. ENG-402")
+            staff_name = st.text_input("Full Name", placeholder="e.g. Chara Mabeza")
+            staff_id = st.text_input("Staff Department", placeholder="e.g. IT")
             if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
                 if not staff_name.strip():
                     st.error("Please enter your name.")
                 elif not staff_id.strip():
-                    st.error("Please enter your Staff ID or Department.")
+                    st.error("Please enter your Department.")
                 else:
                     order_id = datetime.now().strftime("%Y%m%d%H%M%S")
                     order_data = {
