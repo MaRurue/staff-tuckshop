@@ -648,7 +648,7 @@ if app_mode == "🛒 Staff Storefront":
 
     # ── Main area ──────────────────────────────────────────────────────────────
     show_logo()
-    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt. Please remember that orders done between Tuesday and Thursday shall not be considered.</p>", unsafe_allow_html=True)
     st.divider()
 
     if st.session_state.order_placed and st.session_state.latest_order:
