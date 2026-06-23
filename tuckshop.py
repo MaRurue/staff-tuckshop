@@ -1265,9 +1265,9 @@ elif app_mode == "🔑 Seller Portal":
 elif app_mode == "🛠️ IT Admin Portal":
     # IT password — store in Streamlit Secrets as IT_ADMIN_PASSWORD for production
     try:
-        IT_PASSWORD = st.secrets.get("IT_ADMIN_PASSWORD", "itadmin2024")
+        IT_PASSWORD = st.secrets.get("IT_ADMIN_PASSWORD", "itadmin2026")
     except Exception:
-        IT_PASSWORD = "itadmin2024"
+        IT_PASSWORD = None
 
     show_logo()
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>IT Backend Portal — staff account management and system records.</p>", unsafe_allow_html=True)
