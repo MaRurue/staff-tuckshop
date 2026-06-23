@@ -5,6 +5,8 @@ import json
 import requests
 from datetime import datetime
 import streamlit.components.v1 as components
+import hashlib
+import secrets
 
 # Set page config
 st.set_page_config(
@@ -148,6 +150,7 @@ load_css("style.css")
 # ── Constants ──────────────────────────────────────────────────────────────────
 ORDERS_DIR = "orders"
 OVERRIDES_FILE = "product_overrides.json"
+USERS_FILE = "users.json"
 os.makedirs(ORDERS_DIR, exist_ok=True)
 LOGO_PATH = "falconlogo blue.jpg"
 
@@ -158,6 +161,57 @@ try:
     GSHEETS_WEBAPP_URL = st.secrets.get("GSHEETS_WEBAPP_URL", DEFAULT_GSHEETS_URL)
 except Exception:
     GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
+
+
+# ── User Authentication Helpers ────────────────────────────────────────────────
+
+def hash_password(password, salt=None):
+    if salt is None:
+        salt = secrets.token_hex(16)
+    pwd_hash = hashlib.pbkdf2_hmac(
+        'sha256',
+        password.encode('utf-8'),
+        salt.encode('utf-8'),
+        100000
+    ).hex()
+    return pwd_hash, salt
+
+
+def verify_password(password, stored_hash, salt):
+    pwd_hash, _ = hash_password(password, salt)
+    return secrets.compare_digest(pwd_hash, stored_hash)
+
+
+def load_users():
+    # 1️⃣ Try local file first …
+    # 2️⃣ Fallback to Apps‑Script Web‑App
+    try:
+        webapp = st.secrets.get("USERS_SHEET_WEBAPP_URL")
+    except Exception:
+        webapp = None
+    if not webapp:
+        return {}
+    try:
+        r = requests.post(webapp, json={"action": "get"}, timeout=10)
+        if r.status_code == 200:
+            payload = r.json()
+            if payload.get("success"):
+                return payload.get("users", {})
+    except Exception as e:
+        st.error(f"Failed to fetch users from Apps Script: {e}")
+    return {}
+
+
+
+
+def save_users(users):
+    try:
+        with open(USERS_FILE, "w") as f:
+            json.dump(users, f, indent=4)
+        return True
+    except Exception:
+        return False
+
 
 
 # ── Product overrides (local persistence for admin-added / edited items) ───────
@@ -445,6 +499,9 @@ for key, default in [
     ("confirm_clear", False),
     ("confirm_delete_selected", False),
     ("orders_to_delete", []),
+    ("user_authenticated", False),
+    ("current_user", None),
+    ("it_authenticated", False),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -476,6 +533,11 @@ def logout_seller():
     st.session_state.confirm_clear = False
     st.session_state.confirm_delete_selected = False
     st.session_state.orders_to_delete = []
+
+
+def logout_it():
+    st.session_state.it_authenticated = False
+
 
 
 # ── Receipt HTML helper ────────────────────────────────────────────────────────
@@ -570,7 +632,7 @@ with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
     st.markdown("<div class='cart-header'> Falcon College Staff Shop</div>", unsafe_allow_html=True)
-    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal"], label_visibility="collapsed")
+    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal", "🛠️ IT Admin Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
         st.markdown("<div style='text-align:center;color:#10b981;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟢 Cloud Connected</div>", unsafe_allow_html=True)
@@ -585,55 +647,51 @@ with st.sidebar:
 if app_mode == "🛒 Staff Storefront":
     # ── Sidebar: Cart with per-item checkboxes ─────────────────────────────────
     with st.sidebar:
-        st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
-        if not cart_items:
-            st.write("Your cart is empty. Add items from the catalog.")
+        if not st.session_state.user_authenticated:
+            st.markdown("<div class='cart-header'>🔒 Restricted Access</div>", unsafe_allow_html=True)
+            st.info("Please sign in or register on the main page to access your cart and place orders.")
         else:
-            # Track which items to keep (checkbox checked = keep)
-            keep_flags = {}
-            for item in cart_items:
-                keep_flags[item["key"]] = st.checkbox(
-                    f"**{item['name']}**  \n{item['qty']} × ${item['price']:.2f} ({item['uom']}) = **${item['subtotal']:.2f}**",
-                    value=True,
-                    key=f"cart_cb_{item['key']}"
-                )
+            st.markdown("<div class='cart-header'>🛒 Your Cart</div>", unsafe_allow_html=True)
+            if not cart_items:
+                st.write("Your cart is empty. Add items from the catalog.")
+            else:
+                # Track which items to keep (checkbox checked = keep)
+                keep_flags = {}
+                for item in cart_items:
+                    keep_flags[item["key"]] = st.checkbox(
+                        f"**{item['name']}**  \n{item['qty']} × ${item['price']:.2f} ({item['uom']}) = **${item['subtotal']:.2f}**",
+                        value=True,
+                        key=f"cart_cb_{item['key']}"
+                    )
 
-            st.markdown(f"""
-            <div class='cart-total'>
-                <span>TOTAL DUE:</span><span>${cart_total:.2f}</span>
-            </div>""", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class='cart-total'>
+                    <span>TOTAL DUE:</span><span>${cart_total:.2f}</span>
+                </div>""", unsafe_allow_html=True)
 
-            col_remove, col_clear = st.columns(2)
-            with col_remove:
-                if st.button(" Remove Unticked", use_container_width=True):
-                    for item in cart_items:
-                        if not keep_flags.get(item["key"], True):
-                            # Remove from quantities
-                            st.session_state.quantities.pop(item["key"], None)
-                            # Clear the checkbox state so it doesn't reappear
-                            cb_key = f"cart_cb_{item['key']}"
-                            if cb_key in st.session_state:
-                                del st.session_state[cb_key]
-                    st.rerun()
-            with col_clear:
-                st.button(" Clear All", on_click=clear_cart, use_container_width=True)
+                col_remove, col_clear = st.columns(2)
+                with col_remove:
+                    if st.button(" Remove Unticked", use_container_width=True):
+                        for item in cart_items:
+                            if not keep_flags.get(item["key"], True):
+                                # Remove from quantities
+                                st.session_state.quantities.pop(item["key"], None)
+                                # Clear the checkbox state so it doesn't reappear
+                                cb_key = f"cart_cb_{item['key']}"
+                                if cb_key in st.session_state:
+                                    del st.session_state[cb_key]
+                        st.rerun()
+                with col_clear:
+                    st.button(" Clear All", on_click=clear_cart, use_container_width=True)
 
-            st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-            st.markdown("<div class='cart-header'> Checkout Details</div>", unsafe_allow_html=True)
-            staff_name = st.text_input("Full Name", placeholder="e.g. Chara Mabeza")
-            staff_id = st.text_input("Staff Department", placeholder="e.g. IT")
-            if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
-                if not staff_name.strip():
-                    st.error("Please enter your name.")
-                elif not staff_id.strip():
-                    st.error("Please enter your Department.")
-                else:
+                st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+                if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
                     order_id = datetime.now().strftime("%Y%m%d%H%M%S")
                     order_data = {
                         "order_id": order_id,
                         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "staff_name": staff_name.strip(),
-                        "staff_id": staff_id.strip(),
+                        "staff_name": st.session_state.current_user['name'],
+                        "staff_id": st.session_state.current_user['staff_id'],
                         "status": "Pending",
                         "items": [{"category": i["category"], "name": i["name"], "uom": i["uom"],
                                    "price": i["price"], "qty": i["qty"], "subtotal": i["subtotal"]}
@@ -646,70 +704,152 @@ if app_mode == "🛒 Staff Storefront":
                     st.success("Order processed successfully!")
                     st.rerun()
 
+            # ── Account info & Sign Out — always visible when logged in ────────
+            st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'>👤 Account Details</div>", unsafe_allow_html=True)
+            st.markdown(f"**Logged In as:**  \n{st.session_state.current_user['name']}")
+            st.markdown(f"**Department:**  \n{st.session_state.current_user['staff_id']}")
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            if st.button("🚪 Sign Out / Log Out", use_container_width=True, key="btn_signout_sidebar"):
+                st.session_state.user_authenticated = False
+                st.session_state.current_user = None
+                clear_cart()
+                st.rerun()
+
+
     # ── Main area ──────────────────────────────────────────────────────────────
-    show_logo()
-    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt. Please remember that orders done between Tuesday and Thursday shall not be considered.</p>", unsafe_allow_html=True)
-    st.divider()
+    if not st.session_state.user_authenticated:
+        show_logo()
+        st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Welcome to the Falcon Staff Shop. Please Sign In or create a new account to place orders.</p>", unsafe_allow_html=True)
+        st.divider()
 
-    if st.session_state.order_placed and st.session_state.latest_order:
-        order = st.session_state.latest_order
-        st.balloons()
-        st.markdown("<h3 style='text-align:center;'>🎉 Order Successfully Placed!</h3>", unsafe_allow_html=True)
-        st.markdown("Please print the receipt below and present it to the shop to collect your order.")
-        items_rows = "".join(
-            f"<tr><td>{i['name']}<br><small>{i['uom']} @ ${i['price']:.2f}</small></td>"
-            f"<td style='text-align:center;'>{i['qty']}</td>"
-            f"<td style='text-align:right;'>${i['subtotal']:.2f}</td></tr>"
-            for i in order["items"]
-        )
-        components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
-        st.button("🔄 Back to Shop / Order More", on_click=clear_cart)
+        _, auth_col, _ = st.columns([1, 2, 1])
+        with auth_col:
+            auth_tab_in, auth_tab_up = st.tabs([" Sign In", " Sign Up"])
 
-    else:
-        search_query = st.text_input("🔍 Search shop items...", "").strip().lower()
-
-        def render_product_card(category, row, idx, key_prefix=""):
-            """Render a single product card with a full-width quantity number_input."""
-            pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
-            cq = st.session_state.quantities.get(pk, 0)
-            with st.container(border=True):
-                st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
-                new_qty = st.number_input(
-                    "Quantity",
-                    min_value=0,
-                    value=cq,
-                    step=1,
-                    key=f"ni_{key_prefix}{pk}_{idx}"
-                )
-                if new_qty != cq:
-                    if new_qty > 0:
-                        st.session_state.quantities[pk] = new_qty
+            with auth_tab_in:
+                st.markdown("<h3 style='text-align:center;margin-bottom:20px;'>Staff Sign In</h3>", unsafe_allow_html=True)
+                login_user = st.text_input("Username", key="login_username_input").strip().lower()
+                login_pass = st.text_input("Password", type="password", key="login_password_input")
+                st.markdown("<p style='font-size:0.85rem;color:#64748b;margin-top:-10px;margin-bottom:15px;'>💡 <strong>Forgot password?</strong> Please contact the shop administrator to reset it via the Seller Portal.</p>", unsafe_allow_html=True)
+                if st.button("Sign In", type="primary", use_container_width=True, key="btn_login_submit"):
+                    if not login_user or not login_pass:
+                        st.error("Please fill in both fields.")
                     else:
-                        st.session_state.quantities.pop(pk, None)
-                    st.rerun()
+                        users = load_users()
+                        if login_user in users:
+                            u_data = users[login_user]
+                            if verify_password(login_pass, u_data["password_hash"], u_data["salt"]):
+                                st.session_state.user_authenticated = True
+                                st.session_state.current_user = {
+                                    "username": login_user,
+                                    "name": u_data["name"],
+                                    "staff_id": u_data["staff_id"]
+                                }
+                                st.success("Logged in successfully!")
+                                st.rerun()
+                            else:
+                                st.error("Incorrect password.")
+                        else:
+                            st.error("Username not found.")
 
-        if search_query:
-            st.markdown(f"### Search Results for *\"{search_query}\"*")
-            matches = [(cat, row) for cat, df in data.items()
-                       for _, row in df.iterrows()
-                       if search_query in str(row['Product']).lower() or search_query in str(row['UOM']).lower()]
-            if not matches:
-                st.info("No items found. Try a different search term.")
-            else:
-                cols = st.columns(3)
-                for i, (category, row) in enumerate(matches):
-                    with cols[i % 3]:
-                        render_product_card(category, row, i, key_prefix="s_")
+            with auth_tab_up:
+                st.markdown("<h3 style='text-align:center;margin-bottom:20px;'>Staff Account Creation</h3>", unsafe_allow_html=True)
+                new_username = st.text_input("Choose a Username", key="signup_username_input").strip().lower()
+                new_fullname = st.text_input("Full Name", placeholder="e.g. Chara Mabeza", key="signup_fullname_input").strip()
+                new_staffid = st.text_input("Staff Department / ID", placeholder="e.g. IT", key="signup_staffid_input").strip()
+                new_pwd1 = st.text_input("Password", type="password", key="signup_password_input1")
+                new_pwd2 = st.text_input("Confirm Password", type="password", key="signup_password_input2")
+
+                if st.button("Create Account", type="primary", use_container_width=True, key="btn_signup_submit"):
+                    if not new_username or not new_fullname or not new_staffid or not new_pwd1:
+                        st.error("All fields are required.")
+                    elif new_pwd1 != new_pwd2:
+                        st.error("Passwords do not match.")
+                    elif len(new_pwd1) < 4:
+                        st.error("Password must be at least 4 characters long.")
+                    else:
+                        users = load_users()
+                        if new_username in users:
+                            st.error("Username already exists. Please choose a different one.")
+                        else:
+                            pwd_hash, salt = hash_password(new_pwd1)
+                            users[new_username] = {
+                                "username": new_username,
+                                "name": new_fullname,
+                                "staff_id": new_staffid,
+                                "password_hash": pwd_hash,
+                                "salt": salt,
+                                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            }
+                            if save_users(users):
+                                st.success("Account created successfully! Please sign in using the 'Sign In' tab.")
+                            else:
+                                st.error("Failed to save account. Check server permissions.")
+    else:
+        show_logo()
+        st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt. Please remember that orders done between Tuesday and Thursday shall not be considered.</p>", unsafe_allow_html=True)
+        st.divider()
+
+        if st.session_state.order_placed and st.session_state.latest_order:
+            order = st.session_state.latest_order
+            st.balloons()
+            st.markdown("<h3 style='text-align:center;'>🎉 Order Successfully Placed!</h3>", unsafe_allow_html=True)
+            st.markdown("Please print the receipt below and present it to the shop to collect your order.")
+            items_rows = "".join(
+                f"<tr><td>{i['name']}<br><small>{i['uom']} @ ${i['price']:.2f}</small></td>"
+                f"<td style='text-align:center;'>{i['qty']}</td>"
+                f"<td style='text-align:right;'>${i['subtotal']:.2f}</td></tr>"
+                for i in order["items"]
+            )
+            components.html(generate_receipt_html_helper(order, items_rows), height=550, scrolling=True)
+            st.button("🔄 Back to Shop / Order More", on_click=clear_cart)
+
         else:
-            tabs = st.tabs([f"📁 {s}" for s in data.keys()])
-            for tab, (sheet, df) in zip(tabs, data.items()):
-                with tab:
+            search_query = st.text_input("🔍 Search shop items...", "").strip().lower()
+
+            def render_product_card(category, row, idx, key_prefix=""):
+                """Render a single product card with a full-width quantity number_input."""
+                pk = f"{category}|||{row['Product']}|||{row['UOM']}|||{row['Cost price']}"
+                cq = st.session_state.quantities.get(pk, 0)
+                with st.container(border=True):
+                    st.markdown(f"<div class='product-title'>{row['Product']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='product-meta'>Category: {category} | UOM: {row['UOM']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='product-price'>${row['Cost price']:.2f}</div>", unsafe_allow_html=True)
+                    new_qty = st.number_input(
+                        "Quantity",
+                        min_value=0,
+                        value=cq,
+                        step=1,
+                        key=f"ni_{key_prefix}{pk}_{idx}"
+                    )
+                    if new_qty != cq:
+                        if new_qty > 0:
+                            st.session_state.quantities[pk] = new_qty
+                        else:
+                            st.session_state.quantities.pop(pk, None)
+                        st.rerun()
+
+            if search_query:
+                st.markdown(f"### Search Results for *\"{search_query}\"*")
+                matches = [(cat, row) for cat, df in data.items()
+                           for _, row in df.iterrows()
+                           if search_query in str(row['Product']).lower() or search_query in str(row['UOM']).lower()]
+                if not matches:
+                    st.info("No items found. Try a different search term.")
+                else:
                     cols = st.columns(3)
-                    for idx, row in df.reset_index(drop=True).iterrows():
-                        with cols[idx % 3]:
-                            render_product_card(sheet, row, idx, key_prefix="t_")
+                    for i, (category, row) in enumerate(matches):
+                        with cols[i % 3]:
+                            render_product_card(category, row, i, key_prefix="s_")
+            else:
+                tabs = st.tabs([f"📁 {s}" for s in data.keys()])
+                for tab, (sheet, df) in zip(tabs, data.items()):
+                    with tab:
+                        cols = st.columns(3)
+                        for idx, row in df.reset_index(drop=True).iterrows():
+                            with cols[idx % 3]:
+                                render_product_card(sheet, row, idx, key_prefix="t_")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1027,6 +1167,120 @@ elif app_mode == "🔑 Seller Portal":
                             st.cache_data.clear()
                         else:
                             st.error("Restore failed.")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IT ADMIN PORTAL
+# ══════════════════════════════════════════════════════════════════════════════
+elif app_mode == "🛠️ IT Admin Portal":
+    # IT password — store in Streamlit Secrets as IT_ADMIN_PASSWORD for production
+    try:
+        IT_PASSWORD = st.secrets.get("IT_ADMIN_PASSWORD", "itadmin2024")
+    except Exception:
+        IT_PASSWORD = "itadmin2024"
+
+    show_logo()
+    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>IT Backend Portal — staff account management and system records.</p>", unsafe_allow_html=True)
+    st.divider()
+
+    if not st.session_state.it_authenticated:
+        _, col, _ = st.columns([1, 2, 1])
+        with col:
+            with st.container(border=True):
+                st.markdown("<h3 style='text-align:center;margin-bottom:6px;'>🛠️ IT Admin Sign In</h3>", unsafe_allow_html=True)
+                st.markdown("<p style='text-align:center;color:#64748b;font-size:0.85rem;margin-bottom:20px;'>Restricted to authorised IT personnel only.</p>", unsafe_allow_html=True)
+                it_password = st.text_input("IT Admin Password", type="password", key="it_pwd_input")
+                if st.button("🔓 Access IT Portal", type="primary", use_container_width=True, key="btn_it_login"):
+                    if it_password == IT_PASSWORD:
+                        st.session_state.it_authenticated = True
+                        st.success("Access granted.")
+                        st.rerun()
+                    else:
+                        st.error("Incorrect IT admin password.")
+    else:
+        with st.sidebar:
+            st.markdown("<div class='cart-header'>🛠️ IT Admin Session</div>", unsafe_allow_html=True)
+            st.button("🔒 Lock IT Portal", on_click=logout_it, use_container_width=True)
+
+        st.markdown("### 👤 Staff User Account Management")
+        st.markdown("View all registered staff accounts, reset forgotten passwords, or remove accounts.")
+        st.divider()
+
+        users = load_users()
+        if not users:
+            st.info("No staff accounts have been created yet. Staff members can self-register via the Storefront.")
+        else:
+            # ── User Accounts Table ──
+            st.markdown("#### Registered Staff Accounts")
+            users_list = []
+            for username, details in users.items():
+                users_list.append({
+                    "Username": username,
+                    "Full Name": details.get("name", "N/A"),
+                    "Department": details.get("staff_id", "N/A"),
+                    "Registered At": details.get("created_at", "N/A")
+                })
+            df_users = pd.DataFrame(users_list)
+            st.dataframe(df_users, use_container_width=True, hide_index=True)
+
+            st.divider()
+            col_reset, col_delete = st.columns(2)
+
+            # ── Password Reset ──
+            with col_reset:
+                with st.container(border=True):
+                    st.markdown("##### 🔑 Reset Staff Password")
+                    st.markdown("<p style='font-size:0.85rem;color:#64748b;'>Select a user and set a new temporary password. Share it verbally with the staff member so they can sign in.</p>", unsafe_allow_html=True)
+                    reset_username = st.selectbox("User to Reset", list(users.keys()), key="it_reset_user_select")
+                    new_pass = st.text_input("New Temporary Password", placeholder="e.g. welcome123", key="it_reset_new_pass")
+                    if st.button("💾 Reset Password", type="primary", key="it_btn_reset_pwd"):
+                        if not new_pass.strip():
+                            st.error("Password cannot be empty.")
+                        elif len(new_pass.strip()) < 4:
+                            st.error("Password must be at least 4 characters long.")
+                        else:
+                            new_hash, new_salt = hash_password(new_pass.strip())
+                            users[reset_username]["password_hash"] = new_hash
+                            users[reset_username]["salt"] = new_salt
+                            if save_users(users):
+                                st.success(f"✅ Password for **{reset_username}** reset to: `{new_pass.strip()}`  \nPlease share this with the staff member.")
+                            else:
+                                st.error("Failed to update credentials. Check file permissions.")
+
+            # ── Delete Account ──
+            with col_delete:
+                with st.container(border=True):
+                    st.markdown("##### 🗑️ Delete Staff Account")
+                    st.markdown("<p style='font-size:0.85rem;color:#64748b;'>Permanently removes a staff account. The user will need to re-register to place orders again.</p>", unsafe_allow_html=True)
+                    delete_username = st.selectbox("User to Delete", list(users.keys()), key="it_delete_user_select")
+
+                    if "it_confirm_user_delete" not in st.session_state:
+                        st.session_state.it_confirm_user_delete = False
+                        st.session_state.it_user_to_delete = ""
+
+                    if not st.session_state.it_confirm_user_delete or st.session_state.it_user_to_delete != delete_username:
+                        if st.button("🗑️ Delete Account", type="secondary", key="it_btn_delete_user"):
+                            st.session_state.it_confirm_user_delete = True
+                            st.session_state.it_user_to_delete = delete_username
+                            st.rerun()
+                    else:
+                        st.warning(f"⚠️ Delete **'{delete_username}'**? This cannot be undone.")
+                        col_y, col_n = st.columns(2)
+                        with col_y:
+                            if st.button("✅ Yes, Delete", type="primary", key="it_btn_confirm_delete"):
+                                del users[delete_username]
+                                if save_users(users):
+                                    st.success(f"Account '{delete_username}' deleted.")
+                                else:
+                                    st.error("Failed to save changes.")
+                                st.session_state.it_confirm_user_delete = False
+                                st.session_state.it_user_to_delete = ""
+                                st.rerun()
+                        with col_n:
+                            if st.button("❌ Cancel", key="it_btn_cancel_delete"):
+                                st.session_state.it_confirm_user_delete = False
+                                st.session_state.it_user_to_delete = ""
+                                st.rerun()
 
 # ── Sticky Footer (fixed to viewport bottom) ─────────────────────────────────
 st.markdown("""
