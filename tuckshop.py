@@ -1270,7 +1270,7 @@ elif app_mode == " IT Admin Portal":
         IT_PASSWORD = None
 
     show_logo()
-    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>IT Backend Portal — staff account management and system records.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>IT Admin Portal — staff account management and system records.</p>", unsafe_allow_html=True)
     st.divider()
 
     if not st.session_state.it_authenticated:
@@ -1289,7 +1289,7 @@ elif app_mode == " IT Admin Portal":
                         st.error("Incorrect IT admin password.")
     else:
         with st.sidebar:
-            st.markdown("<div class='cart-header'>🛠️ IT Admin Session</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> IT Admin Session</div>", unsafe_allow_html=True)
             st.button("🔒 Lock IT Portal", on_click=logout_it, use_container_width=True)
 
         st.markdown("### 👤 Staff User Account Management")
