@@ -162,14 +162,10 @@ try:
 except Exception:
     GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
 
-# Users Google Sheet — the raw spreadsheet URL (for reference / future use).
-# All user reads and writes go through USERS_SHEET_WEBAPP_URL (the Apps Script endpoint).
-# Add this to Streamlit Secrets as:
-#   USERS_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/<your-sheet-id>/edit"
 try:
     USERS_GOOGLE_SHEET_URL = st.secrets.get("USERS_GOOGLE_SHEET_URL", None)
 except Exception:
-    USERS_GOOGLE_SHEET_URL = None
+    USERS_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1E8oomF7Es62yoeCSCbfoHL_i-X0iEqDkLrNRjo3GLXE/export?format=xlsx"
 
 
 # ── User Authentication Helpers ────────────────────────────────────────────────
