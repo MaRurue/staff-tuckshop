@@ -719,7 +719,7 @@ with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, width=70)
     st.markdown("<div class='cart-header'> Falcon College Staff Shop</div>", unsafe_allow_html=True)
-    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", "🔑 Seller Portal", "🛠️ IT Admin Portal"], label_visibility="collapsed")
+    app_mode = st.selectbox("Select View Mode", ["🛒 Staff Storefront", " Seller Portal", " IT Admin Portal"], label_visibility="collapsed")
     db_status = "gspread" if GSHEETS_WEBAPP_URL else "local"
     if db_status == "gspread":
         st.markdown("<div style='text-align:center;color:#10b981;font-size:0.85rem;font-weight:bold;margin-top:10px;'>🟢 Cloud Connected</div>", unsafe_allow_html=True)
@@ -797,7 +797,7 @@ if app_mode == "🛒 Staff Storefront":
             st.markdown(f"**Logged In as:**  \n{st.session_state.current_user['name']}")
             st.markdown(f"**Department:**  \n{st.session_state.current_user['staff_id']}")
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            if st.button("🚪 Sign Out / Log Out", use_container_width=True, key="btn_signout_sidebar"):
+            if st.button(" Sign Out / Log Out", use_container_width=True, key="btn_signout_sidebar"):
                 st.session_state.user_authenticated = False
                 st.session_state.current_user = None
                 clear_cart()
@@ -818,7 +818,7 @@ if app_mode == "🛒 Staff Storefront":
                 st.markdown("<h3 style='text-align:center;margin-bottom:20px;'>Staff Sign In</h3>", unsafe_allow_html=True)
                 login_user = st.text_input("Username", key="login_username_input").strip().lower()
                 login_pass = st.text_input("Password", type="password", key="login_password_input")
-                st.markdown("<p style='font-size:0.85rem;color:#64748b;margin-top:-10px;margin-bottom:15px;'>💡 <strong>Forgot password?</strong> Please contact the shop administrator to reset it via the Seller Portal.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size:0.85rem;color:#64748b;margin-top:-10px;margin-bottom:15px;'>💡 <strong>Forgot password?</strong> Please contact the IT administrator to reset it.</p>", unsafe_allow_html=True)
                 if st.button("Sign In", type="primary", use_container_width=True, key="btn_login_submit"):
                     if not login_user or not login_pass:
                         st.error("Please fill in both fields.")
@@ -945,7 +945,7 @@ if app_mode == "🛒 Staff Storefront":
 # ══════════════════════════════════════════════════════════════════════════════
 # SELLER PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
-elif app_mode == "🔑 Seller Portal":
+elif app_mode == " Seller Portal":
     show_logo()
     st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Admin portal — manage orders, products, and pricing.</p>", unsafe_allow_html=True)
     st.divider()
@@ -967,7 +967,7 @@ elif app_mode == "🔑 Seller Portal":
         orders, db_source = load_orders()
 
         with st.sidebar:
-            st.markdown("<div class='cart-header'>⚙️ Admin Session</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cart-header'> Admin Session</div>", unsafe_allow_html=True)
             if db_source == "gspread":
                 st.markdown("<div style='color:#10b981;font-size:0.9rem;font-weight:bold;margin-bottom:15px;'>🟢 Cloud Sync Active</div>", unsafe_allow_html=True)
             else:
@@ -1051,7 +1051,7 @@ elif app_mode == "🔑 Seller Portal":
                                         st.rerun()
                                     else:
                                         st.error("Failed to update status. Please try again.")
-                        with st.expander("🔍 View Items / Print Receipt"):
+                        with st.expander(" View Items / Print Receipt"):
                             table_md = "| Product | Category | UOM | Qty | Cost | Subtotal |\n| :--- | :--- | :--- | :---: | :---: | :---: |\n"
                             for item in order["items"]:
                                 table_md += f"| {item['name']} | {item['category']} | {item['uom']} | {item['qty']} | ${item['price']:.2f} | ${item['subtotal']:.2f} |\n"
@@ -1262,7 +1262,7 @@ elif app_mode == "🔑 Seller Portal":
 # ══════════════════════════════════════════════════════════════════════════════
 # IT ADMIN PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
-elif app_mode == "🛠️ IT Admin Portal":
+elif app_mode == " IT Admin Portal":
     # IT password — store in Streamlit Secrets as IT_ADMIN_PASSWORD for production
     try:
         IT_PASSWORD = st.secrets.get("IT_ADMIN_PASSWORD", "itadmin2026")
@@ -1319,7 +1319,7 @@ elif app_mode == "🛠️ IT Admin Portal":
             # ── Password Reset ──
             with col_reset:
                 with st.container(border=True):
-                    st.markdown("##### 🔑 Reset Staff Password")
+                    st.markdown("#####  Reset Staff Password")
                     st.markdown("<p style='font-size:0.85rem;color:#64748b;'>Select a user and set a new temporary password. Share it verbally with the staff member so they can sign in.</p>", unsafe_allow_html=True)
                     reset_username = st.selectbox("User to Reset", list(users.keys()), key="it_reset_user_select")
                     new_pass = st.text_input("New Temporary Password", placeholder="e.g. welcome123", key="it_reset_new_pass")
@@ -1335,7 +1335,7 @@ elif app_mode == "🛠️ IT Admin Portal":
                                 users[reset_username]["password_hash"] = new_hash
                                 users[reset_username]["salt"] = new_salt
                                 save_users(users)
-                                st.success(f"✅ Password for **{reset_username}** reset to: `{new_pass.strip()}`  \nPlease share this with the staff member.")
+                                st.success(f" Password for **{reset_username}** reset to: `{new_pass.strip()}`  \nPlease share this with the staff member.")
                             else:
                                 st.error("Failed to update credentials on Google Sheets. Please try again.")
 
