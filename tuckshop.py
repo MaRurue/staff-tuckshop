@@ -162,6 +162,15 @@ try:
 except Exception:
     GSHEETS_WEBAPP_URL = DEFAULT_GSHEETS_URL
 
+# Users Google Sheet — the raw spreadsheet URL (for reference / future use).
+# All user reads and writes go through USERS_SHEET_WEBAPP_URL (the Apps Script endpoint).
+# Add this to Streamlit Secrets as:
+#   USERS_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/<your-sheet-id>/edit"
+try:
+    USERS_GOOGLE_SHEET_URL = st.secrets.get("USERS_GOOGLE_SHEET_URL", None)
+except Exception:
+    USERS_GOOGLE_SHEET_URL = None
+
 
 # ── User Authentication Helpers ────────────────────────────────────────────────
 
@@ -183,25 +192,43 @@ def verify_password(password, stored_hash, salt):
 
 
 def load_users():
-    # 1️⃣ Try local file first …
-    # 2️⃣ Fallback to Apps‑Script Web‑App
+    # 1️⃣ Load from local file first
+    users = {}
+    if os.path.exists(USERS_FILE):
+        try:
+            with open(USERS_FILE, "r") as f:
+                users = json.load(f)
+        except Exception:
+            pass
+
+    # 2️⃣ Sync / Fallback with Apps‑Script Web‑App
     try:
         webapp = st.secrets.get("USERS_SHEET_WEBAPP_URL")
     except Exception:
         webapp = None
-    if not webapp:
-        return {}
-    try:
-        r = requests.post(webapp, json={"action": "get"}, timeout=10)
-        if r.status_code == 200:
-            payload = r.json()
-            if payload.get("success"):
-                return payload.get("users", {})
-    except Exception as e:
-        st.error(f"Failed to fetch users from Apps Script: {e}")
-    return {}
 
+    if webapp:
+        try:
+            r = requests.post(webapp, json={"action": "get"}, timeout=10)
+            if r.status_code == 200:
+                payload = r.json()
+                if payload.get("success"):
+                    cloud_users = payload.get("users", {})
+                    # Ensure "username" key is set in user objects
+                    for uname, u_data in cloud_users.items():
+                        u_data["username"] = uname
+                    if cloud_users:
+                        users = cloud_users
+                        # Save updated/merged users locally for quick subsequent loads
+                        try:
+                            with open(USERS_FILE, "w") as f:
+                                json.dump(users, f, indent=4)
+                        except Exception:
+                            pass
+        except Exception as e:
+            st.warning(f"Unable to sync users with cloud: {e}")
 
+    return users
 
 
 def save_users(users):
@@ -210,6 +237,70 @@ def save_users(users):
             json.dump(users, f, indent=4)
         return True
     except Exception:
+        return False
+
+
+def cloud_create_user(username, password_hash, salt, name, staff_id, created_at):
+    try:
+        webapp = st.secrets.get("USERS_SHEET_WEBAPP_URL")
+    except Exception:
+        webapp = None
+    if not webapp:
+        return True
+    try:
+        payload = {
+            "action": "create",
+            "username": username,
+            "password_hash": password_hash,
+            "salt": salt,
+            "name": name,
+            "staff_id": staff_id,
+            "created_at": created_at
+        }
+        r = requests.post(webapp, json=payload, timeout=10)
+        return r.status_code == 200 and r.json().get("success", False)
+    except Exception as e:
+        st.error(f"Failed to create cloud user: {e}")
+        return False
+
+
+def cloud_update_user(username, password_hash, salt):
+    try:
+        webapp = st.secrets.get("USERS_SHEET_WEBAPP_URL")
+    except Exception:
+        webapp = None
+    if not webapp:
+        return True
+    try:
+        payload = {
+            "action": "update",
+            "username": username,
+            "password_hash": password_hash,
+            "salt": salt
+        }
+        r = requests.post(webapp, json=payload, timeout=10)
+        return r.status_code == 200 and r.json().get("success", False)
+    except Exception as e:
+        st.error(f"Failed to update cloud user: {e}")
+        return False
+
+
+def cloud_delete_user(username):
+    try:
+        webapp = st.secrets.get("USERS_SHEET_WEBAPP_URL")
+    except Exception:
+        webapp = None
+    if not webapp:
+        return True
+    try:
+        payload = {
+            "action": "delete",
+            "username": username
+        }
+        r = requests.post(webapp, json=payload, timeout=10)
+        return r.status_code == 200 and r.json().get("success", False)
+    except Exception as e:
+        st.error(f"Failed to delete cloud user: {e}")
         return False
 
 
@@ -774,18 +865,21 @@ if app_mode == "🛒 Staff Storefront":
                             st.error("Username already exists. Please choose a different one.")
                         else:
                             pwd_hash, salt = hash_password(new_pwd1)
-                            users[new_username] = {
-                                "username": new_username,
-                                "name": new_fullname,
-                                "staff_id": new_staffid,
-                                "password_hash": pwd_hash,
-                                "salt": salt,
-                                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            }
-                            if save_users(users):
+                            created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            cloud_ok = cloud_create_user(new_username, pwd_hash, salt, new_fullname, new_staffid, created_at)
+                            if cloud_ok:
+                                users[new_username] = {
+                                    "username": new_username,
+                                    "name": new_fullname,
+                                    "staff_id": new_staffid,
+                                    "password_hash": pwd_hash,
+                                    "salt": salt,
+                                    "created_at": created_at
+                                }
+                                save_users(users)
                                 st.success("Account created successfully! Please sign in using the 'Sign In' tab.")
                             else:
-                                st.error("Failed to save account. Check server permissions.")
+                                st.error("Failed to save account to Google Sheets. Please try again.")
     else:
         show_logo()
         st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt. Please remember that orders done between Tuesday and Thursday shall not be considered.</p>", unsafe_allow_html=True)
@@ -1240,12 +1334,14 @@ elif app_mode == "🛠️ IT Admin Portal":
                             st.error("Password must be at least 4 characters long.")
                         else:
                             new_hash, new_salt = hash_password(new_pass.strip())
-                            users[reset_username]["password_hash"] = new_hash
-                            users[reset_username]["salt"] = new_salt
-                            if save_users(users):
+                            cloud_ok = cloud_update_user(reset_username, new_hash, new_salt)
+                            if cloud_ok:
+                                users[reset_username]["password_hash"] = new_hash
+                                users[reset_username]["salt"] = new_salt
+                                save_users(users)
                                 st.success(f"✅ Password for **{reset_username}** reset to: `{new_pass.strip()}`  \nPlease share this with the staff member.")
                             else:
-                                st.error("Failed to update credentials. Check file permissions.")
+                                st.error("Failed to update credentials on Google Sheets. Please try again.")
 
             # ── Delete Account ──
             with col_delete:
@@ -1268,11 +1364,13 @@ elif app_mode == "🛠️ IT Admin Portal":
                         col_y, col_n = st.columns(2)
                         with col_y:
                             if st.button("✅ Yes, Delete", type="primary", key="it_btn_confirm_delete"):
-                                del users[delete_username]
-                                if save_users(users):
+                                cloud_ok = cloud_delete_user(delete_username)
+                                if cloud_ok:
+                                    del users[delete_username]
+                                    save_users(users)
                                     st.success(f"Account '{delete_username}' deleted.")
                                 else:
-                                    st.error("Failed to save changes.")
+                                    st.error("Failed to delete account from Google Sheets. Please try again.")
                                 st.session_state.it_confirm_user_delete = False
                                 st.session_state.it_user_to_delete = ""
                                 st.rerun()
