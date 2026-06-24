@@ -742,12 +742,12 @@ if app_mode == "🛒 Staff Storefront":
             if not cart_items:
                 st.write("Your cart is empty. Add items from the catalog.")
             else:
-                # Track which items to keep (checkbox checked = keep)
-                keep_flags = {}
+                # Track which items to remove (checkbox checked = remove)
+                remove_flags = {}
                 for item in cart_items:
-                    keep_flags[item["key"]] = st.checkbox(
+                    remove_flags[item["key"]] = st.checkbox(
                         f"**{item['name']}**  \n{item['qty']} × ${item['price']:.2f} ({item['uom']}) = **${item['subtotal']:.2f}**",
-                        value=True,
+                        value=False,
                         key=f"cart_cb_{item['key']}"
                     )
 
@@ -758,9 +758,9 @@ if app_mode == "🛒 Staff Storefront":
 
                 col_remove, col_clear = st.columns(2)
                 with col_remove:
-                    if st.button(" Remove Unticked", use_container_width=True):
+                    if st.button(" Remove Selected", use_container_width=True):
                         for item in cart_items:
-                            if not keep_flags.get(item["key"], True):
+                            if remove_flags.get(item["key"], False):
                                 # Remove from quantities
                                 st.session_state.quantities.pop(item["key"], None)
                                 # Clear the checkbox state so it doesn't reappear
@@ -772,24 +772,32 @@ if app_mode == "🛒 Staff Storefront":
                     st.button(" Clear All", on_click=clear_cart, use_container_width=True)
 
                 st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-                if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
-                    order_id = datetime.now().strftime("%Y%m%d%H%M%S")
-                    order_data = {
-                        "order_id": order_id,
-                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "staff_name": st.session_state.current_user['name'],
-                        "staff_id": st.session_state.current_user['staff_id'],
-                        "status": "Pending",
-                        "items": [{"category": i["category"], "name": i["name"], "uom": i["uom"],
-                                   "price": i["price"], "qty": i["qty"], "subtotal": i["subtotal"]}
-                                  for i in cart_items],
-                        "total": cart_total
-                    }
-                    save_order(order_data)
-                    st.session_state.latest_order = order_data
-                    st.session_state.order_placed = True
-                    st.success("Order processed successfully!")
-                    st.rerun()
+                # Check if current day is between Tuesday and Thursday (1 = Tuesday, 2 = Wednesday, 3 = Thursday)
+                current_day = datetime.now().weekday()
+                is_blocked_day = 1 <= current_day <= 3
+
+                if is_blocked_day:
+                    st.error("🛒 Ordering is closed from Tuesday to Thursday.")
+                    st.button("Place Order & Get Receipt", type="primary", use_container_width=True, disabled=True)
+                else:
+                    if st.button("Place Order & Get Receipt", type="primary", use_container_width=True):
+                        order_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                        order_data = {
+                            "order_id": order_id,
+                            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "staff_name": st.session_state.current_user['name'],
+                            "staff_id": st.session_state.current_user['staff_id'],
+                            "status": "Pending",
+                            "items": [{"category": i["category"], "name": i["name"], "uom": i["uom"],
+                                       "price": i["price"], "qty": i["qty"], "subtotal": i["subtotal"]}
+                                      for i in cart_items],
+                            "total": cart_total
+                        }
+                        save_order(order_data)
+                        st.session_state.latest_order = order_data
+                        st.session_state.order_placed = True
+                        st.success("Order processed successfully!")
+                        st.rerun()
 
             # ── Account info & Sign Out — always visible when logged in ────────
             st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
@@ -878,6 +886,13 @@ if app_mode == "🛒 Staff Storefront":
                                 st.error("Failed to save account to Google Sheets. Please try again.")
     else:
         show_logo()
+
+        # Check if current day is between Tuesday and Thursday (1 = Tuesday, 2 = Wednesday, 3 = Thursday)
+        current_day = datetime.now().weekday()
+        is_blocked_day = 1 <= current_day <= 3
+        if is_blocked_day:
+            st.warning("⚠️ **Ordering is currently closed.** Orders cannot be placed between Tuesday and Thursday.")
+
         st.markdown("<p style='text-align:center;color:#64748b;font-size:1.05rem;margin-bottom:28px;'>Select items from the catalog below. Enter checkout details in the sidebar and print your receipt. Please remember that orders done between Tuesday and Thursday shall not be considered.</p>", unsafe_allow_html=True)
         st.divider()
 
