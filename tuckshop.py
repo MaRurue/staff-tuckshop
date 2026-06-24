@@ -1451,6 +1451,6 @@ st.markdown("""
 .main .block-container { padding-bottom: 50px !important; }
 </style>
 <div class='fixed-footer'>
-    App by <strong>Chara</strong>
+    App by <strong>Chara RN Mabeza</strong>
 </div>
 """, unsafe_allow_html=True)
