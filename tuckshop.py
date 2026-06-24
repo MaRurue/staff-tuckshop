@@ -805,6 +805,36 @@ if app_mode == "🛒 Staff Storefront":
             st.markdown(f"**Logged In as:**  \n{st.session_state.current_user['name']}")
             st.markdown(f"**Department:**  \n{st.session_state.current_user['staff_id']}")
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            # ── Change Password ──────────────────────────────────────────
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            with st.expander("🔑 Change My Password"):
+                cp_current = st.text_input("Current Password", type="password", key="cp_current")
+                cp_new1    = st.text_input("New Password",     type="password", key="cp_new1")
+                cp_new2    = st.text_input("Confirm New Password", type="password", key="cp_new2")
+                if st.button("Update Password", type="primary", use_container_width=True, key="btn_change_pwd"):
+                    if not cp_current or not cp_new1 or not cp_new2:
+                        st.error("Please fill in all three fields.")
+                    elif cp_new1 != cp_new2:
+                        st.error("New passwords do not match.")
+                    elif len(cp_new1.strip()) < 4:
+                        st.error("New password must be at least 4 characters.")
+                    else:
+                        _users = load_users()
+                        _uname = st.session_state.current_user["username"]
+                        _udata = _users.get(_uname, {})
+                        if not verify_password(cp_current, _udata.get("password_hash", ""), _udata.get("salt", "")):
+                            st.error("Current password is incorrect.")
+                        else:
+                            new_hash, new_salt = hash_password(cp_new1.strip())
+                            cloud_ok = cloud_update_user(_uname, new_hash, new_salt)
+                            if cloud_ok:
+                                _users[_uname]["password_hash"] = new_hash
+                                _users[_uname]["salt"]          = new_salt
+                                save_users(_users)
+                                st.success("✅ Password updated successfully!")
+                            else:
+                                st.error("Failed to sync new password. Please try again.")
+
             if st.button(" Sign Out / Log Out", use_container_width=True, key="btn_signout_sidebar"):
                 st.session_state.user_authenticated = False
                 st.session_state.current_user = None
@@ -1421,6 +1451,6 @@ st.markdown("""
 .main .block-container { padding-bottom: 50px !important; }
 </style>
 <div class='fixed-footer'>
-    App by <strong>Chara RN Mabeza</strong>
+    App by <strong>Chara</strong>
 </div>
 """, unsafe_allow_html=True)
