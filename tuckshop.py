@@ -972,7 +972,12 @@ elif app_mode == " Seller Portal":
                 st.markdown("<h3 style='text-align:center;margin-bottom:20px;'>Seller Sign In</h3>", unsafe_allow_html=True)
                 password = st.text_input("Enter Seller Password", type="password")
                 if st.button("Unlock Admin Panel", type="primary", use_container_width=True):
-                    if password == "sales123":
+                    try:
+                        seller_pwd = st.secrets["SELLER_PASSWORD"]
+                    except Exception:
+                        st.error("⚠️ SELLER_PASSWORD is not set in Streamlit Secrets. Please add it to .streamlit/secrets.toml.")
+                        st.stop()
+                    if password == seller_pwd:
                         st.session_state.seller_authenticated = True
                         st.success("Access Granted!")
                         st.rerun()
@@ -1278,9 +1283,9 @@ elif app_mode == " Seller Portal":
 # IT ADMIN PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 elif app_mode == " IT Admin Portal":
-    # IT password — store in Streamlit Secrets as IT_ADMIN_PASSWORD for production
+    # IT password — must be set in Streamlit Secrets as IT_ADMIN_PASSWORD
     try:
-        IT_PASSWORD = st.secrets.get("IT_ADMIN_PASSWORD", "itadmin2026")
+        IT_PASSWORD = st.secrets["IT_ADMIN_PASSWORD"]
     except Exception:
         IT_PASSWORD = None
 
@@ -1296,7 +1301,9 @@ elif app_mode == " IT Admin Portal":
                 st.markdown("<p style='text-align:center;color:#64748b;font-size:0.85rem;margin-bottom:20px;'>Restricted to authorised IT personnel only.</p>", unsafe_allow_html=True)
                 it_password = st.text_input("IT Admin Password", type="password", key="it_pwd_input")
                 if st.button("🔓 Access IT Portal", type="primary", use_container_width=True, key="btn_it_login"):
-                    if it_password == IT_PASSWORD:
+                    if IT_PASSWORD is None:
+                        st.error("⚠️ IT_ADMIN_PASSWORD is not set in Streamlit Secrets. Please add it to .streamlit/secrets.toml.")
+                    elif it_password == IT_PASSWORD:
                         st.session_state.it_authenticated = True
                         st.success("Access granted.")
                         st.rerun()
@@ -1414,6 +1421,6 @@ st.markdown("""
 .main .block-container { padding-bottom: 50px !important; }
 </style>
 <div class='fixed-footer'>
-    App by <strong>Chara</strong>
+    App by <strong>Chara RN Mabeza</strong>
 </div>
 """, unsafe_allow_html=True)
